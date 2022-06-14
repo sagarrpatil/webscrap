@@ -1,7 +1,11 @@
 const express = require("express");
 const axios = require("axios");
 var firebase = require('firebase')
+const cors = require('cors');
 const app = express();
+app.use(cors({
+  origin: '*'
+}));
 const PORT = 5000;
 const moment = require('moment');
 var firebaseConfig = {
@@ -101,7 +105,6 @@ setInterval(() => {
 }, 30000);
 
 app.get('/', (req, res) => {
- 
   res.send(data)
 })
 
