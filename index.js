@@ -42,11 +42,11 @@ setInterval(() => {
    else{
     axios.post("https://api.niftytrader.in/webapi/Option/getOiPcrListData", niftypcrdata).then((response)=>{
       let oiDataMonthPCRNifty=response.data.resultData.oiDatas;
-       database.ref(`/nifty/OIMonthPCR/`+date).set(oiDataMonthPCRNifty);
+       database.ref(`/nifty/OIMonthPCR/`).set(oiDataMonthPCRNifty);
      })
      axios.post("https://api.niftytrader.in/webapi/Option/getOiPcrListData", bankniftypcrdata).then((response)=>{
        let oiDataMonthPCRNifty=response.data.resultData.oiDatas;
-        database.ref(`/banknifty/OIMonthPCR/`+date).set(oiDataMonthPCRNifty);
+        database.ref(`/banknifty/OIMonthPCR/`).set(oiDataMonthPCRNifty);
       })
       var changeOINifty={reqType: "niftyoichange", reqDate: ""};
       axios.post("https://api.niftytrader.in/webapi/Option/getOiChangeData",changeOINifty).then((response)=>{
