@@ -39,7 +39,7 @@ setInterval(() => {
  if((moment().format("dddd")!=="Saturday" || moment().format("dddd")!=="Sunday")  
  &&(moment().format("a")=="am" && Number(moment().format("hh")>=9) ||
   (moment().format("a")=="pm" &&
- (Number(moment().format("hh"))<=3 || Number(moment().format("hh"))==12))
+ ((Number(moment().format("hh"))<=3 && (Number(moment().format("hh"))==3 && Number(moment().format("mm"))<31)) || Number(moment().format("hh"))==12))
  )){
     console.log("open")
     axios.post("https://api.niftytrader.in/webapi/Option/getOiPcrListData", niftypcrdata).then((response)=>{
@@ -108,7 +108,7 @@ setInterval(() => {
 }else{
   console.log("close")
 }
-}, 30000);
+}, 3000);
 
 app.get('/', (req, res) => {
   res.send(data)
