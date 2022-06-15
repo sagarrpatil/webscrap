@@ -26,7 +26,7 @@ database.ref(`/`).once('value').then(function(snapshot) {
 })
 
 setInterval(() => {
-  var date=moment().format("DDMMYYYY");
+  var date=moment().utcOffset("+05:30").format("DDMMYYYY");
   var niftypcrdata={
     "reqType": "niftypcr",
     "reqDate": ""
@@ -35,8 +35,8 @@ setInterval(() => {
     "reqType": "bankniftypcr",
     "reqDate": ""
   }
-  if((moment().format("a")==="pm" && Number(moment().format("hh"))>3 && Number(moment().format("mm"))<31)
-   || (moment().format("a")==="am" && Number(moment().format("hh"))<=9 && Number(moment().format("mm"))<=14)){
+  if((moment().format("a")==="pm" && Number(moment().utcOffset("+05:30").format("hh"))>3 && Number(moment().utcOffset("+05:30").format("mm"))<31)
+   || (moment().format("a")==="am" && Number(moment().utcOffset("+05:30").format("hh"))<=9 && Number(moment().utcOffset("+05:30").format("mm"))<=14)){
   
    }
    else{
@@ -51,6 +51,7 @@ setInterval(() => {
       var changeOINifty={reqType: "niftyoichange", reqDate: ""};
       axios.post("https://api.niftytrader.in/webapi/Option/getOiChangeData",changeOINifty).then((response)=>{
       var oiChangeData = response.data.resultData.oiDatas;
+      database.ref('/nifty/oiChangeData').set(oiChangeData)
       var calloi=0;
       var putoi=0;
       response.data.resultData.oiDatas.map((oi)=>{
@@ -65,7 +66,7 @@ setInterval(() => {
         else
         calloi=calloi+callOIMinus-oi.puts_change_oi;
       })
-      database.ref('/nifty/ChangeInOI/'+moment().format("YYYY-MM-DDThh:mm")).set({
+      database.ref('/nifty/ChangeInOI/'+moment().utcOffset("+05:30").format("YYYY-MM-DDThh:mm")).set({
         CallOIChange:calloi,
         PutOIChange:putoi
       })
@@ -73,6 +74,7 @@ setInterval(() => {
       var bankchangeOINifty={reqType: "bankniftyoichange", reqDate: ""};
       axios.post("https://api.niftytrader.in/webapi/Option/getOiChangeData",bankchangeOINifty).then((response)=>{
         var oiChangeData = response.data.resultData.oiDatas;
+        database.ref('/banknifty/oiChangeData').set(oiChangeData)
         var calloi=0;
         var putoi=0;
         response.data.resultData.oiDatas.map((oi)=>{
@@ -87,7 +89,7 @@ setInterval(() => {
           else
           calloi=calloi+callOIMinus-oi.puts_change_oi;
         })
-        database.ref('/banknifty/ChangeInOI/'+moment().format("YYYY-MM-DDThh:mm")).set({
+        database.ref('/banknifty/ChangeInOI/'+moment().utcOffset("+05:30").format("YYYY-MM-DDThh:mm")).set({
           CallOIChange:calloi,
           PutOIChange:putoi
         })
