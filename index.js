@@ -26,6 +26,7 @@ database.ref(`/`).once('value').then(function(snapshot) {
 })
 
 setInterval(() => {
+
   var date=moment().utcOffset("+05:30").format("DDMMYYYY");
   var niftypcrdata={
     "reqType": "niftypcr",
@@ -35,11 +36,10 @@ setInterval(() => {
     "reqType": "bankniftypcr",
     "reqDate": ""
   }
-  if((moment().format("a")==="pm" && Number(moment().utcOffset("+05:30").format("hh"))>3 && Number(moment().utcOffset("+05:30").format("mm"))<31)
+  if((moment().format("dddd")=="Saturday" || moment().format("dddd")=="Sunday" ) || (moment().format("a")==="pm" && Number(moment().utcOffset("+05:30").format("hh"))>3 && Number(moment().utcOffset("+05:30").format("mm"))<31)
    || (moment().format("a")==="am" && Number(moment().utcOffset("+05:30").format("hh"))<=9 && Number(moment().utcOffset("+05:30").format("mm"))<=14)){
-  
-   }
-   else{
+    console.log("close")
+  }else{
     axios.post("https://api.niftytrader.in/webapi/Option/getOiPcrListData", niftypcrdata).then((response)=>{
       let oiDataMonthPCRNifty=response.data.resultData.oiDatas;
        database.ref(`/nifty/OIMonthPCR/`).set(oiDataMonthPCRNifty);
