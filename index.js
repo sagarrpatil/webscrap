@@ -107,9 +107,12 @@ setInterval(() => {
           database.ref('/banknifty/OIMonth').set(response.data.resultData.oiDatas)
         })
 }else{
-  console.log("close")
+ console.log("close")
 }
-}, 30000);
+if(moment().format("a")=="am" && (Number(moment().format("hh"))==8) && (Number(moment().format("mm"))==1)){
+  
+}
+}, 3000);
 
 app.get('/', (req, res) => {
   res.send(data)
