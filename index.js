@@ -121,7 +121,10 @@ setInterval(() => {
 }, 30000);
 
 app.get('/', (req, res) => {
-  res.send("Keeplive")
+  res.send({"Keeplive":"keep running", 
+  timeOfServer: moment().format("YYYY-MM-DD, hh:mm:ss"),
+  time: moment().utcOffset("+05:30").format("YYYY-MM-DD, hh:mm:ss")
+})
 })
 
 app.listen(process.env.PORT || PORT, () => {
