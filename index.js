@@ -36,15 +36,20 @@ setInterval(() => {
     "reqType": "bankniftypcr",
     "reqDate": ""
   }
-//  if((moment().format("dddd")!=="Saturday" || moment().format("dddd")!=="Sunday")  
-//       &&(moment().format("a")=="am" && 
-//           (Number(moment().format("hh")>=10) || (Number(moment().format("hh"))==9 && Number(moment().format("mm")>14))) ||
-//         (moment().format("a")=="pm" &&
-//           ((Number(moment().format("hh"))<=3 && (Number(moment().format("hh"))==3 && Number(moment().format("mm"))<31)) || Number(moment().format("hh"))==12 || Number(moment().format("hh"))<=2))
-//       ))
-     if(true) 
+
+     if(((moment().format("a")=="am" && 
+          (Number(moment().format("hh"))==9 || 
+          Number(moment().format("hh"))==10 || 
+          Number(moment().format("hh"))==11)) || 
+        (moment().format("a")=="pm" &&
+          (Number(moment().format("hh"))==12 || 
+          Number(moment().format("hh"))==1 ||
+          Number(moment().format("hh"))==2 ||
+          (Number(moment().format("hh"))==3 && Number(moment().format("mm"))<31)
+        )) ) && (moment().format("dddd")!=="Saturday" || moment().format("dddd")!=="Sunday"))
       {
     console.log("open")
+    database.ref(`/status/`).set({status: "open"})
     axios.post("https://api.niftytrader.in/webapi/Option/getOiPcrListData", niftypcrdata).then((response)=>{
       let oiDataMonthPCRNifty=response.data.resultData.oiDatas;
        database.ref(`/nifty/OIMonthPCR/`).set(oiDataMonthPCRNifty);
@@ -109,11 +114,10 @@ setInterval(() => {
           database.ref('/banknifty/OIMonth').set(response.data.resultData.oiDatas)
         })
 }else{
- console.log("close")
+  database.ref(`/status/`).set({status: "close"})
+  console.log("close")
 }
-if(moment().format("a")=="am" && (Number(moment().format("hh"))==8) && (Number(moment().format("mm"))==1)){
-  
-}
+
 }, 30000);
 
 app.get('/', (req, res) => {
