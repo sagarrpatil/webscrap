@@ -36,12 +36,14 @@ setInterval(() => {
     "reqType": "bankniftypcr",
     "reqDate": ""
   }
- if((moment().format("dddd")!=="Saturday" || moment().format("dddd")!=="Sunday")  
-      &&(moment().format("a")=="am" && 
-          (Number(moment().format("hh")>=10) || (Number(moment().format("hh"))==9 && Number(moment().format("mm")>14))) ||
-        (moment().format("a")=="pm" &&
-          ((Number(moment().format("hh"))<=3 && (Number(moment().format("hh"))==3 && Number(moment().format("mm"))<31)) || Number(moment().format("hh"))==12 || Number(moment().format("hh"))<=2))
-      )){
+//  if((moment().format("dddd")!=="Saturday" || moment().format("dddd")!=="Sunday")  
+//       &&(moment().format("a")=="am" && 
+//           (Number(moment().format("hh")>=10) || (Number(moment().format("hh"))==9 && Number(moment().format("mm")>14))) ||
+//         (moment().format("a")=="pm" &&
+//           ((Number(moment().format("hh"))<=3 && (Number(moment().format("hh"))==3 && Number(moment().format("mm"))<31)) || Number(moment().format("hh"))==12 || Number(moment().format("hh"))<=2))
+//       ))
+     if(true) 
+      {
     console.log("open")
     axios.post("https://api.niftytrader.in/webapi/Option/getOiPcrListData", niftypcrdata).then((response)=>{
       let oiDataMonthPCRNifty=response.data.resultData.oiDatas;
