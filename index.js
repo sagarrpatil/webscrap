@@ -114,7 +114,7 @@ setInterval(() => {
 if(moment().format("a")=="am" && (Number(moment().format("hh"))==8) && (Number(moment().format("mm"))==1)){
   
 }
-}, 3000);
+}, 30000);
 
 app.get('/', (req, res) => {
   res.send(data)
