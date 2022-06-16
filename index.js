@@ -37,16 +37,16 @@ setInterval(() => {
     "reqDate": ""
   }
 
-     if(((moment().format("a")=="am" && 
-          (Number(moment().format("hh"))==9 || 
-          Number(moment().format("hh"))==10 || 
-          Number(moment().format("hh"))==11)) || 
-        (moment().format("a")=="pm" &&
-          (Number(moment().format("hh"))==12 || 
-          Number(moment().format("hh"))==1 ||
-          Number(moment().format("hh"))==2 ||
-          (Number(moment().format("hh"))==3 && Number(moment().format("mm"))<31)
-        )) ) && (moment().format("dddd")!=="Saturday" || moment().format("dddd")!=="Sunday"))
+     if(((moment().utcOffset("+05:30").format("a")=="am" && 
+          (Number(moment().utcOffset("+05:30").format("hh"))==9 || 
+          Number(moment().utcOffset("+05:30").format("hh"))==10 || 
+          Number(moment().utcOffset("+05:30").format("hh"))==11)) || 
+        (moment().utcOffset("+05:30").format("a")=="pm" &&
+          (Number(moment().utcOffset("+05:30").format("hh"))==12 || 
+          Number(moment().utcOffset("+05:30").format("hh"))==1 ||
+          Number(moment().utcOffset("+05:30").format("hh"))==2 ||
+          (Number(moment().utcOffset("+05:30").format("hh"))==3 && Number(moment().utcOffset("+05:30").format("mm"))<31)
+        )) ) && (moment().utcOffset("+05:30").format("dddd")!=="Saturday" || moment().utcOffset("+05:30").format("dddd")!=="Sunday"))
       {
     console.log("open")
     database.ref(`/status/`).set({status: "open"})
@@ -121,22 +121,8 @@ setInterval(() => {
 }, 30000);
 
 app.get('/', (req, res) => {
-  res.send(data)
+  res.send("Keeplive")
 })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 app.listen(process.env.PORT || PORT, () => {
     console.log('listening on *:5000');
