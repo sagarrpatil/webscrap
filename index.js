@@ -120,66 +120,66 @@ setInterval(() => {
 }, 30000);
 
 
-setInterval(() => {
-  if(((moment().utcOffset("+05:30").format("a")=="am" && 
-  (Number(moment().utcOffset("+05:30").format("hh"))==9 || 
-  Number(moment().utcOffset("+05:30").format("hh"))==10 || 
-  Number(moment().utcOffset("+05:30").format("hh"))==11)) || 
-(moment().utcOffset("+05:30").format("a")=="pm" &&
-  (Number(moment().utcOffset("+05:30").format("hh"))==12 || 
-  Number(moment().utcOffset("+05:30").format("hh"))==1 ||
-  Number(moment().utcOffset("+05:30").format("hh"))==2 ||
-  (Number(moment().utcOffset("+05:30").format("hh"))==3 && Number(moment().utcOffset("+05:30").format("mm"))<31)
-)) ) && (moment().utcOffset("+05:30").format("dddd")!=="Saturday" || moment().utcOffset("+05:30").format("dddd")!=="Sunday"))
-{
-axios.get("https://www.nseindia.com/").then((data) => {
-  var headers=data['headers']
-  var cookie;
-  Object.keys(headers).map(key =>{
-    if(key=="set-cookie"){
-      let cook=headers[key]
-      cookie=cook[0]+"; "+cook[1]+"; "+cook[2]+"; "+cook[3]+";"
-    }
-  })
-  axios.get("https://www.nseindia.com/api/quote-derivative?symbol=NIFTY", 
-  {headers: {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-    'accept-language': 'en,gu;q=0.9,hi;q=0.8', 'accept-encoding': 'gzip, deflate, br',
-    "access-control-allow-origin": "nseindia.com",
-    "cookie":cookie
-  }}).then((response)=>{
-    let filterNseFuTNiftyData = response.data.stocks.filter(futData=> futData.metadata.instrumentType=="Index Futures")
-    var niftyVwapAndPrice={
-      vwap:filterNseFuTNiftyData[0].marketDeptOrderBook.tradeInfo.vmap,
-      price:filterNseFuTNiftyData[0].marketDeptOrderBook.carryOfCost.price.lastPrice
-    }
-    database.ref('/nifty/VWAPPrice/'+moment().utcOffset("+05:30").format("hh:mm")).set(niftyVwapAndPrice)
-    console.log(niftyVwapAndPrice)
-  })
+// setInterval(() => {
+//   if(((moment().utcOffset("+05:30").format("a")=="am" && 
+//   (Number(moment().utcOffset("+05:30").format("hh"))==9 || 
+//   Number(moment().utcOffset("+05:30").format("hh"))==10 || 
+//   Number(moment().utcOffset("+05:30").format("hh"))==11)) || 
+// (moment().utcOffset("+05:30").format("a")=="pm" &&
+//   (Number(moment().utcOffset("+05:30").format("hh"))==12 || 
+//   Number(moment().utcOffset("+05:30").format("hh"))==1 ||
+//   Number(moment().utcOffset("+05:30").format("hh"))==2 ||
+//   (Number(moment().utcOffset("+05:30").format("hh"))==3 && Number(moment().utcOffset("+05:30").format("mm"))<31)
+// )) ) && (moment().utcOffset("+05:30").format("dddd")!=="Saturday" || moment().utcOffset("+05:30").format("dddd")!=="Sunday"))
+// {
+// axios.get("https://www.nseindia.com/").then((data) => {
+//   var headers=data['headers']
+//   var cookie;
+//   Object.keys(headers).map(key =>{
+//     if(key=="set-cookie"){
+//       let cook=headers[key]
+//       cookie=cook[0]+"; "+cook[1]+"; "+cook[2]+"; "+cook[3]+";"
+//     }
+//   })
+//   axios.get("https://www.nseindia.com/api/quote-derivative?symbol=NIFTY", 
+//   {headers: {
+//     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+//     'accept-language': 'en,gu;q=0.9,hi;q=0.8', 'accept-encoding': 'gzip, deflate, br',
+//     "access-control-allow-origin": "nseindia.com",
+//     "cookie":cookie
+//   }}).then((response)=>{
+//     let filterNseFuTNiftyData = response.data.stocks.filter(futData=> futData.metadata.instrumentType=="Index Futures")
+//     var niftyVwapAndPrice={
+//       vwap:filterNseFuTNiftyData[0].marketDeptOrderBook.tradeInfo.vmap,
+//       price:filterNseFuTNiftyData[0].marketDeptOrderBook.carryOfCost.price.lastPrice
+//     }
+//     database.ref('/nifty/VWAPPrice/'+moment().utcOffset("+05:30").format("hh:mm")).set(niftyVwapAndPrice)
+//     console.log(niftyVwapAndPrice)
+//   })
 
 
-  axios.get("https://www.nseindia.com/api/quote-derivative?symbol=BANKNIFTY", 
-  {headers: {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-    'accept-language': 'en,gu;q=0.9,hi;q=0.8', 'accept-encoding': 'gzip, deflate, br',
-    "access-control-allow-origin": "nseindia.com",
-    "cookie":cookie
-  }}).then((response)=>{
-    let filterNseFuTBANKNIFTYData = response.data.stocks.filter(futData=> futData.metadata.instrumentType=="Index Futures")
-    var BANKNIFTYVwapAndPrice={
-      vwap:filterNseFuTBANKNIFTYData[0].marketDeptOrderBook.tradeInfo.vmap,
-      price:filterNseFuTBANKNIFTYData[0].marketDeptOrderBook.carryOfCost.price.lastPrice
-    }
-    database.ref('/banknifty/VWAPPrice/'+moment().utcOffset("+05:30").format("hh:mm")).set(BANKNIFTYVwapAndPrice)
-    console.log(BANKNIFTYVwapAndPrice)
-  })
+//   axios.get("https://www.nseindia.com/api/quote-derivative?symbol=BANKNIFTY", 
+//   {headers: {
+//     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+//     'accept-language': 'en,gu;q=0.9,hi;q=0.8', 'accept-encoding': 'gzip, deflate, br',
+//     "access-control-allow-origin": "nseindia.com",
+//     "cookie":cookie
+//   }}).then((response)=>{
+//     let filterNseFuTBANKNIFTYData = response.data.stocks.filter(futData=> futData.metadata.instrumentType=="Index Futures")
+//     var BANKNIFTYVwapAndPrice={
+//       vwap:filterNseFuTBANKNIFTYData[0].marketDeptOrderBook.tradeInfo.vmap,
+//       price:filterNseFuTBANKNIFTYData[0].marketDeptOrderBook.carryOfCost.price.lastPrice
+//     }
+//     database.ref('/banknifty/VWAPPrice/'+moment().utcOffset("+05:30").format("hh:mm")).set(BANKNIFTYVwapAndPrice)
+//     console.log(BANKNIFTYVwapAndPrice)
+//   })
 
 
-})
-}else{
-  console.log("Close Futures")
-}
-}, 30000);
+// })
+// }else{
+//   console.log("Close Futures")
+// }
+// }, 30000);
 
 
 
