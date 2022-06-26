@@ -46,22 +46,22 @@ setInterval(() => {
           Number(moment().utcOffset("+05:30").format("hh"))==1 ||
           Number(moment().utcOffset("+05:30").format("hh"))==2 ||
           (Number(moment().utcOffset("+05:30").format("hh"))==3 && Number(moment().utcOffset("+05:30").format("mm"))<31)
-        )) ) && (moment().utcOffset("+05:30").format("dddd")!=="Saturday" || moment().utcOffset("+05:30").format("dddd")!=="Sunday"))
-      {
+        )) ) && (moment().utcOffset("+05:30").format("dddd")!=="Saturday" && moment().utcOffset("+05:30").format("dddd")!=="Sunday"))
+        {
     console.log("open")
-    database.ref(`/status/`).set({status: "open"})
+    database.ref(date+`/status/`).set({status: "open"})
     axios.post("https://api.niftytrader.in/webapi/Option/getOiPcrListData", niftypcrdata).then((response)=>{
       let oiDataMonthPCRNifty=response.data.resultData.oiDatas;
-       database.ref(`/nifty/OIMonthPCR/`).set(oiDataMonthPCRNifty);
+       database.ref(date+`/nifty/OIMonthPCR/`).set(oiDataMonthPCRNifty);
      })
      axios.post("https://api.niftytrader.in/webapi/Option/getOiPcrListData", bankniftypcrdata).then((response)=>{
        let oiDataMonthPCRNifty=response.data.resultData.oiDatas;
-        database.ref(`/banknifty/OIMonthPCR/`).set(oiDataMonthPCRNifty);
+        database.ref(date+`/banknifty/OIMonthPCR/`).set(oiDataMonthPCRNifty);
       })
       var changeOINifty={reqType: "niftyoichange", reqDate: ""};
       axios.post("https://api.niftytrader.in/webapi/Option/getOiChangeData",changeOINifty).then((response)=>{
       var oiChangeData = response.data.resultData.oiDatas;
-      database.ref('/nifty/oiChangeData').set(oiChangeData)
+      database.ref(date+'/nifty/oiChangeData').set(oiChangeData)
       var calloi=0;
       var putoi=0;
       response.data.resultData.oiDatas.map((oi)=>{
@@ -76,7 +76,7 @@ setInterval(() => {
         else
         calloi=calloi+callOIMinus-oi.puts_change_oi;
       })
-      database.ref('/nifty/ChangeInOI/'+moment().utcOffset("+05:30").format("YYYY-MM-DDThh:mm")).set({
+      database.ref(date+'/nifty/ChangeInOI/'+moment().utcOffset("+05:30").format("YYYY-MM-DDThh:mm")).set({
         CallOIChange:calloi,
         PutOIChange:putoi
       })
@@ -84,7 +84,7 @@ setInterval(() => {
       var bankchangeOINifty={reqType: "bankniftyoichange", reqDate: ""};
       axios.post("https://api.niftytrader.in/webapi/Option/getOiChangeData",bankchangeOINifty).then((response)=>{
         var oiChangeData = response.data.resultData.oiDatas;
-        database.ref('/banknifty/oiChangeData').set(oiChangeData)
+        database.ref(date+'/banknifty/oiChangeData').set(oiChangeData)
         var calloi=0;
         var putoi=0;
         response.data.resultData.oiDatas.map((oi)=>{
@@ -99,7 +99,7 @@ setInterval(() => {
           else
           calloi=calloi+callOIMinus-oi.puts_change_oi;
         })
-        database.ref('/banknifty/ChangeInOI/'+moment().utcOffset("+05:30").format("YYYY-MM-DDThh:mm")).set({
+        database.ref(date+'/banknifty/ChangeInOI/'+moment().utcOffset("+05:30").format("YYYY-MM-DDThh:mm")).set({
           CallOIChange:calloi,
           PutOIChange:putoi
         })
@@ -107,17 +107,17 @@ setInterval(() => {
 
         let oimNifty= {reqType: "niftyoilist", reqDate: ""}
         axios.post("https://api.niftytrader.in/webapi/Option/getOiData", oimNifty).then((response)=>{
-          database.ref('/nifty/OIMonth').set(response.data.resultData.oiDatas)
+          database.ref(date+'/nifty/OIMonth').set(response.data.resultData.oiDatas)
         })
         let oimBankNifty= {reqType: "bankniftyoi", reqDate: ""}
         axios.post("https://api.niftytrader.in/webapi/Option/getOiData", oimBankNifty).then((response)=>{
-          database.ref('/banknifty/OIMonth').set(response.data.resultData.oiDatas)
+          database.ref(date+'/banknifty/OIMonth').set(response.data.resultData.oiDatas)
         })
 }else{
-  database.ref(`/status/`).set({status: "close"})
+  database.ref(date+`/status/`).set({status: "close"})
   console.log("close")
 }
-}, 30000);
+}, 3000);
 
 
 // setInterval(() => {
