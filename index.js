@@ -117,7 +117,7 @@ setInterval(() => {
   database.ref(date+`/status/`).set({status: "close"})
   console.log("close")
 }
-}, 3000);
+}, 30000);
 
 
 // setInterval(() => {
