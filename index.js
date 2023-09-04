@@ -6,7 +6,7 @@ const app = express();
 app.use(cors({
   origin: '*'
 }));
-const PORT = 6000;
+const PORT = 9000;
 const moment = require('moment');
 var firebaseConfig = {
   apiKey: "AIzaSyCitIWt3V5aai8NG4tyI2KF_Ui-ZlCrb44",
