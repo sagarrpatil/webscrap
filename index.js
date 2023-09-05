@@ -78,6 +78,7 @@ app.get('/', (req, res) => {
   timeOfServer: moment().format("YYYY-MM-DD, hh:mm:ss"),
   time: moment().utcOffset("+05:30").format("YYYY-MM-DD, hh:mm:ss")
 })
+getValue();
 })
 
 app.listen(process.env.PORT || PORT, () => {
