@@ -46,7 +46,7 @@ database.ref(`/`).once('value').then(function(snapshot) {
     }
       axios.post("https://chartink.com/screener/process", formData, config).then((response)=>{
         console.log(response.data)
-        database.ref(`/55emaAbove13Emabelow`).set(response.data);
+        database.ref(`/ema55Above13Emabelow`).set(response.data);
       })
     })
   }
