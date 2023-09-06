@@ -6,8 +6,7 @@ const FormData = require('form-data');
 const app = express();
 const cheerio = require('cheerio');
 const cron = require('node-cron');
-
-app.use(cors({
+const { SNSClient, PublishCommand } = require("@aws-sdk/client-sns");app.use(cors({
   origin: '*'
 }));
 const PORT = 9000;
@@ -76,7 +75,34 @@ const schedule = '*/10 9-16 * * 1-5';
 // }, 3000000);
 
 
+const snsClient = new SNSClient({ 
+  credentials: {
+    accessKeyId: "AKIAXQWF3ZSUT5ZYYVVV",
+    secretAccessKey: "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",
+  },
+  region: 'eu-north-1' });
+const phoneNumber = ['+917057455569', "+919284076601", "+917588861931", "+918551892121"];
 
+cron.schedule('30 9,12,15 * * 1-5', () =>
+    database.ref(`/`).once('value').then((snapshot)=> {
+      let message = snapshot.val().ema55Above13Emabelow.data.map(obj => `${obj.nsecode}`).join('\n');
+      if(message)
+        for (let i = 0; i < phoneNumber.length; i++) {
+          const params = {
+            PhoneNumber: phoneNumber[i],
+            Message: `**Stock Shortlisted For Swing Trading** \n` + message,
+          };
+            const command = new PublishCommand(params);
+                snsClient.send(command)
+                  .then(data => {
+                    console.log("Message sent successfully:", data);
+                  })
+                  .catch(error => {
+                    console.error("Error sending message:", error);
+                });
+            }
+    })
+)
 
 app.get('/', (req, res) => {
   res.send({"Keeplive":"keep running", 
