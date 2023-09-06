@@ -5,6 +5,7 @@ const cors = require('cors');
 const FormData = require('form-data');
 const app = express();
 const cheerio = require('cheerio');
+const cron = require('node-cron');
 
 app.use(cors({
   origin: '*'
@@ -29,7 +30,9 @@ database.ref(`/`).once('value').then(function(snapshot) {
 })
 
 // setInterval(() => {
-
+process.env.TZ = 'Asia/Kolkata';
+const schedule = '*/10 9-16 * * 1-5';
+// const schedule = '*/10 * 9-16 * * 1-5';
   // var date=moment().utcOffset("+05:30").format("DDMMYYYY");
   const getValue = async () => {
   const formData = new FormData();
@@ -50,7 +53,8 @@ database.ref(`/`).once('value').then(function(snapshot) {
       })
     })
   }
-  getValue();
+  cron.schedule(schedule, getValue);
+  // getValue();
     //  if(((moment().utcOffset("+05:30").format("a")=="am" && 
     //       (Number(moment().utcOffset("+05:30").format("hh"))==9 || 
     //       Number(moment().utcOffset("+05:30").format("hh"))==10 || 
