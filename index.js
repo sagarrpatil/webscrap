@@ -36,7 +36,7 @@ const schedule = '*/10 9-16 * * 1-5';
   // var date=moment().utcOffset("+05:30").format("DDMMYYYY");
   const getValue = async () => {
   const formData = new FormData();
-  let value = "( {46553} ( [0] 4 hour close > [0] 4 hour ema( [0] 4 hour close , 200 ) and [0] 4 hour close >= [0] 4 hour ema( [0] 4 hour close , 55 ) and market cap >= 5000 and [0] 4 hour volume > [0] 4 hour sma( [0] 4 hour close , 20 ) and [0] 4 hour close <= [0] 4 hour ema( [0] 4 hour close , 13 ) and [0] 4 hour close <= [0] 4 hour ema( [0] 4 hour close , 30 ) ) ) "
+  let value = "( {57960} ( [0] 4 hour close > [0] 4 hour ema( [0] 4 hour close , 200 ) and [0] 4 hour close >= [0] 4 hour ema( [0] 4 hour close , 55 ) and market cap >= 5000 and [0] 4 hour volume > [0] 4 hour sma( [0] 4 hour close , 20 ) and [0] 4 hour close <= [0] 4 hour ema( [0] 4 hour close , 13 ) and [0] 4 hour close <= [0] 4 hour ema( [0] 4 hour close , 44 ) ) )"
   formData.append('scan_clause', value);
    axios.get("https://chartink.com/screener/swing-2023-09-02-20?src=wassup").then(resp=>{
     const $ = cheerio.load(resp.data);
