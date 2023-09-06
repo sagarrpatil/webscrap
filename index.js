@@ -50,6 +50,7 @@ const schedule = '*/10 9-16 * * 1-5';
       axios.post("https://chartink.com/screener/process", formData, config).then((response)=>{
         console.log(response.data)
         database.ref(`/ema55Above13Emabelow`).set(response.data);
+        database.ref(`/timeOfData`).set(moment().utcOffset("+05:30").format("YYYY-MM-DD, hh:mm:ss"));
       })
     })
   }
