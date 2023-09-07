@@ -85,7 +85,7 @@ const phoneNumber = ['+917057455569', "+919284076601", "+917588861931", "+918551
 
 cron.schedule('30 9,12,15 * * 1-5', () =>
     database.ref(`/`).once('value').then((snapshot)=> {
-      let message = snapshot.val().ema55Above13Emabelow.data.map(obj => `${obj.nsecode}`).join('\n');
+      let message = snapshot.val().ema55Above13Emabelow.data.map(obj => `${obj.nsecode} ${obj.close}`).join('\n');
       if(message)
         for (let i = 0; i < phoneNumber.length; i++) {
           const params = {
