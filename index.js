@@ -77,11 +77,11 @@ const schedule = '*/10 9-16 * * 1-5';
 
 const snsClient = new SNSClient({ 
   credentials: {
-    accessKeyId: "AKIAXQWF3ZSUT5ZYYVVV",
-    secretAccessKey: "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",
+    accessKeyId: "AKIAXQWF3ZSU3DEZPKVS",
+    secretAccessKey: "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",
   },
   region: 'eu-north-1' });
-const phoneNumber = ['+917057455569', "+919284076601", "+917588861931", "+918551892121"];
+const phoneNumber = ['+917057455569'];
 
 cron.schedule('30 9,12,15 * * 1-5', () =>
     database.ref(`/`).once('value').then((snapshot)=> {
