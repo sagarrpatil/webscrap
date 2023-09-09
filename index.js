@@ -6,7 +6,8 @@ const FormData = require('form-data');
 const app = express();
 const cheerio = require('cheerio');
 const cron = require('node-cron');
-const { SNSClient, PublishCommand } = require("@aws-sdk/client-sns");app.use(cors({
+const { SNSClient, PublishCommand } = require("@aws-sdk/client-sns");
+app.use(cors({
   origin: '*'
 }));
 const PORT = 9000;
@@ -54,55 +55,69 @@ const schedule = '*/10 9-16 * * 1-5';
     })
   }
   cron.schedule(schedule, getValue);
-  // getValue();
-    //  if(((moment().utcOffset("+05:30").format("a")=="am" && 
-    //       (Number(moment().utcOffset("+05:30").format("hh"))==9 || 
-    //       Number(moment().utcOffset("+05:30").format("hh"))==10 || 
-    //       Number(moment().utcOffset("+05:30").format("hh"))==11)) || 
-    //     (moment().utcOffset("+05:30").format("a")=="pm" &&
-    //       (Number(moment().utcOffset("+05:30").format("hh"))==12 || 
-    //       Number(moment().utcOffset("+05:30").format("hh"))==1 ||
-    //       Number(moment().utcOffset("+05:30").format("hh"))==2 ||
-    //       (Number(moment().utcOffset("+05:30").format("hh"))==3 && Number(moment().utcOffset("+05:30").format("mm"))<31)
-    //     )) ) && (moment().utcOffset("+05:30").format("dddd")!=="Saturday" && moment().utcOffset("+05:30").format("dddd")!=="Sunday"))
-    //     {
-          console.log("open")
-
-    //   }else{
-    //     database.ref(date+`/status/`).set({status: "close"})
-    //     console.log("close")
-    // }
-// }, 3000000);
 
 
-const snsClient = new SNSClient({ 
-  credentials: {
-    accessKeyId: "AKIAXQWF3ZSU3DEZPKVS",
-    secretAccessKey: "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",
-  },
-  region: 'eu-north-1' });
-const phoneNumber = ['+917057455569'];
+  const getWhatsappData = async (message, phone) =>{
+    try{
+      await axios.get("https://graph.facebook.com/v2.10/oauth/access_token?grant_type=fb_exchange_token&client_id=296113739720920&client_secret=3ed23567bd175be409952a1db7642788&fb_exchange_token=EAAENUFpE6NgBOwK78GagI4x01IT8rjaSZA9QEj5fytZAVtrvjZCQMLc3fgF4ZA1djka4e3wnYI51m9xDzY8cp8rCUXLhNHQJrAwuSS3MPCkgP0DtPbgZAgccMTZA8SWzBqaj0lqzQfVnrgwh6z1uNzvQwGu3P8lG4Wq7dne4yKcZBZCxY88RVLCwLA1crO2EvqqE")
+      .then((resp)=>{
+        // console.log(resp.data.access_token)
+        let config = {
+          headers: {
+            "Authorization": "Bearer " + resp.data.access_token,
+            "Content-Type":"application/json"
+          }
+        }
+        let data= {
+          "messaging_product": "whatsapp",
+          "recipient_type": "individual",
+          "to": "91"+phone,
+          "type": "text",
+          "text": { 
+            "preview_url": true,
+            "body": message
+            }
+        }
+         axios.post("https://graph.facebook.com/v17.0/137094856143524/messages", data, config).then(res=>{
+          console.log(res)
+        })
+      })
+    } catch (error) {
+        console.log(error)
+    }
+  }
+
+// const snsClient = new SNSClient({ 
+//   credentials: {
+//     accessKeyId: "AKIAXQWF3ZSU3DEZPKVS",
+//     secretAccessKey: "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",
+//   },
+//   region: 'eu-north-1' });
+const phoneNumber = ['7057455569', '9881015524', "8551892121"];
 
 cron.schedule('30 9,12,15 * * 1-5', () =>
     database.ref(`/`).once('value').then((snapshot)=> {
-      let message = snapshot.val().ema55Above13Emabelow.data.map(obj => `${obj.nsecode} ${obj.close}`).join('\n');
+      let message = snapshot.val().ema55Above13Emabelow.data.map(obj => `*${obj.nsecode}*    ${obj.close}   https://in.tradingview.com/chart/?symbol=${obj.nsecode}`).join('\n\n');
       if(message)
         for (let i = 0; i < phoneNumber.length; i++) {
-          const params = {
-            PhoneNumber: phoneNumber[i],
-            Message: `**Stock Shortlisted For Swing Trading** \n` + message,
-          };
-            const command = new PublishCommand(params);
-                snsClient.send(command)
-                  .then(data => {
-                    console.log("Message sent successfully:", data);
-                  })
-                  .catch(error => {
-                    console.error("Error sending message:", error);
-                });
+
+          getWhatsappData(`55 Market \n\n\n` + message, phoneNumber[i])
+          // const params = {
+          //   PhoneNumber: phoneNumber[i],
+          //   Message: `**Stock Shortlisted For Swing Trading** \n` + message,
+          // };
+            // const command = new PublishCommand(params);
+            //     snsClient.send(command)
+            //       .then(data => {
+            //         console.log("Message sent successfully:", data);
+            //       })
+            //       .catch(error => {
+            //         console.error("Error sending message:", error);
+            //     });
             }
     })
 )
+
 
 app.get('/', (req, res) => {
   res.send({"Keeplive":"keep running", 
