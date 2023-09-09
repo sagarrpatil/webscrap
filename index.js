@@ -93,7 +93,7 @@ const schedule = '*/10 9-16 * * 1-5';
 //     secretAccessKey: "NOCvxkZPeKLkEXN4k7BrWWz3MXdVF1j1ExqOzC0r",
 //   },
 //   region: 'eu-north-1' });
-const phoneNumber = ['7057455569', '9881015524', "8551892121"];
+const phoneNumber = ['7057455569', '9881015524', "8551892121", "7588861931"];
 
 cron.schedule('30 9,12,15 * * 1-5', () =>
     database.ref(`/`).once('value').then((snapshot)=> {
