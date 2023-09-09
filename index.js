@@ -60,7 +60,7 @@ const schedule = '*/10 9-16 * * 1-5';
   const getWhatsappData = async (message, phone) =>{
     try{
       await axios.get("https://graph.facebook.com/v2.10/oauth/access_token?grant_type=fb_exchange_token&client_id=296113739720920&client_secret=3ed23567bd175be409952a1db7642788&fb_exchange_token=EAAENUFpE6NgBOwK78GagI4x01IT8rjaSZA9QEj5fytZAVtrvjZCQMLc3fgF4ZA1djka4e3wnYI51m9xDzY8cp8rCUXLhNHQJrAwuSS3MPCkgP0DtPbgZAgccMTZA8SWzBqaj0lqzQfVnrgwh6z1uNzvQwGu3P8lG4Wq7dne4yKcZBZCxY88RVLCwLA1crO2EvqqE")
-      .then((resp)=>{
+      .then(async (resp)=>{
         // console.log(resp.data.access_token)
         let config = {
           headers: {
@@ -78,7 +78,7 @@ const schedule = '*/10 9-16 * * 1-5';
             "body": message
             }
         }
-         axios.post("https://graph.facebook.com/v17.0/137094856143524/messages", data, config).then(res=>{
+        await axios.post("https://graph.facebook.com/v17.0/137094856143524/messages", data, config).then(res=>{
           console.log(res)
         })
       })
@@ -97,27 +97,25 @@ const phoneNumber = ['7057455569', '9881015524', "8551892121"];
 
 cron.schedule('30 9,12,15 * * 1-5', () =>
     database.ref(`/`).once('value').then((snapshot)=> {
-      let message = snapshot.val().ema55Above13Emabelow.data.map(obj => `*${obj.nsecode}*    ${obj.close}   https://in.tradingview.com/chart/?symbol=${obj.nsecode}`).join('\n\n');
+      let message = snapshot.val().ema55Above13Emabelow.data.map(obj => `*${obj.nsecode}*                ${obj.close}  \n https://in.tradingview.com/chart/?symbol=${obj.nsecode}`).join('\n\n');
       if(message)
         for (let i = 0; i < phoneNumber.length; i++) {
-
-          getWhatsappData(`55 Market \n\n\n` + message, phoneNumber[i])
-          // const params = {
-          //   PhoneNumber: phoneNumber[i],
-          //   Message: `**Stock Shortlisted For Swing Trading** \n` + message,
-          // };
-            // const command = new PublishCommand(params);
-            //     snsClient.send(command)
-            //       .then(data => {
-            //         console.log("Message sent successfully:", data);
-            //       })
-            //       .catch(error => {
-            //         console.error("Error sending message:", error);
-            //     });
-            }
+          getWhatsappData(`Automate Market \n\n\n` + message, phoneNumber[i])
+        }
     })
 )
 
+app.get('/send', (req, res) => {
+  res.send({"Keeplive":"executed", 
+})
+database.ref(`/`).once('value').then((snapshot)=> {
+  let message = snapshot.val().ema55Above13Emabelow.data.map(obj => `*${obj.nsecode}*                ${obj.close}  \n https://in.tradingview.com/chart/?symbol=${obj.nsecode}`).join('\n\n');
+  if(message)
+    for (let i = 0; i < phoneNumber.length; i++) {
+      getWhatsappData(`Automate Market \n\n\n` + message, phoneNumber[i])
+    }
+})
+})
 
 app.get('/', (req, res) => {
   res.send({"Keeplive":"keep running", 
