@@ -97,7 +97,7 @@ const phoneNumber = ['7057455569', '9881015524', "8551892121", "7588861931", "98
 
 cron.schedule('30 9-15 * * 1-5', () =>
     database.ref(`/`).once('value').then((snapshot)=> {
-      let message = snapshot.val().ema55Above13Emabelow.data.map(obj => `*${obj.nsecode}*                ${obj.close}  \n https://in.tradingview.com/chart/?symbol=${obj.nsecode}`).join('\n\n');
+      let message = snapshot.val().ema55Above13Emabelow?.data?.map(obj => `*${obj.nsecode}*                ${obj.close}  \n https://in.tradingview.com/chart/?symbol=${obj.nsecode}`).join('\n\n');
       if(message)
         for (let i = 0; i < phoneNumber.length; i++) {
           getWhatsappData(`Automate Market \n\n\n` + message, phoneNumber[i])
@@ -109,7 +109,7 @@ app.get('/send', (req, res) => {
   res.send({"Keeplive":"executed", 
 })
 database.ref(`/`).once('value').then((snapshot)=> {
-  let message = snapshot.val().ema55Above13Emabelow.data.map(obj => `*${obj.nsecode}*                ${obj.close}  \n https://in.tradingview.com/chart/?symbol=${obj.nsecode}`).join('\n\n');
+  let message = snapshot.val().ema55Above13Emabelow?.data?.map(obj => `*${obj.nsecode}*                ${obj.close}  \n https://in.tradingview.com/chart/?symbol=${obj.nsecode}`).join('\n\n');
   if(message)
     for (let i = 0; i < phoneNumber.length; i++) {
       getWhatsappData(`Automate Market \n\n\n` + message, phoneNumber[i])
