@@ -93,7 +93,9 @@ const schedule = '*/10 9-16 * * 1-5';
 //     secretAccessKey: "NOCvxkZPeKLkEXN4k7BrWWz3MXdVF1j1ExqOzC0r",
 //   },
 //   region: 'eu-north-1' });
-const phoneNumber = ['7057455569', '9881015524', "8551892121", "7588861931", "9890228501"];
+const phoneNumber = ['7057455569', 
+'9881015524', "8551892121", "7588861931", "9890228501"
+];
 
 cron.schedule('30 9-15 * * 1-5', () =>
     database.ref(`/`).once('value').then((snapshot)=> {
@@ -125,6 +127,39 @@ app.get('/', (req, res) => {
 getValue();
 })
 
+const getWhatsappInitailize = async (message, phone) =>{
+  try{
+    await axios.get("https://graph.facebook.com/v2.10/oauth/access_token?grant_type=fb_exchange_token&client_id=296113739720920&client_secret=3ed23567bd175be409952a1db7642788&fb_exchange_token=EAAENUFpE6NgBO1pQBklVBzlZApVFAFlOiYpdHWkbZBK9axWbMmkZCJ3MFKdYAzTDwc8spOElGM2I3LnO0Y5DY4HpujMIELFEwW4GRp5AX0x7hwzRZC0vxXfSEVJ1iTSvBEhnniC7y7bwvM0hrODvmT1ZBHTFzakxZCek87tbaYqWWHC3Kq8CB7FfryBk70FJ9nRTPecTvZBQYoncwuqJV3ZCgnwZD")
+    .then(async (resp)=>{
+      // console.log(resp.data.access_token)
+      let config = {
+        headers: {
+          "Authorization": "Bearer " + resp.data.access_token,
+          "Content-Type":"application/json"
+        }
+      }
+      let data= { 
+        "messaging_product": "whatsapp", 
+        "to": "91"+phone, 
+        "type": "template",
+        "template": { 
+            "name": "get_signal", 
+            "language": { "code": "en" } 
+        }
+    }
+      await axios.post("https://graph.facebook.com/v17.0/137094856143524/messages", data, config).then(res=>{
+        console.log(res.data)
+      })
+    })
+  } catch (error) {
+      console.log(error, "sasasa")
+  }
+}
+cron.schedule('0 8 * * 1-5', () => {
+  for (let i = 0; i < phoneNumber.length; i++) {
+    getWhatsappInitailize(``, phoneNumber[i])
+  }
+})
 app.listen(process.env.PORT || PORT, () => {
     console.log('listening on *:' + PORT);
 });
