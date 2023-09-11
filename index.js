@@ -93,9 +93,9 @@ const schedule = '*/10 9-16 * * 1-5';
 //     secretAccessKey: "NOCvxkZPeKLkEXN4k7BrWWz3MXdVF1j1ExqOzC0r",
 //   },
 //   region: 'eu-north-1' });
-const phoneNumber = ['7057455569', '9881015524', "8551892121", "7588861931"];
+const phoneNumber = ['7057455569', '9881015524', "8551892121", "7588861931", "9890228501"];
 
-cron.schedule('30 9,12,15 * * 1-5', () =>
+cron.schedule('40 9-15 * * 1-5', () =>
     database.ref(`/`).once('value').then((snapshot)=> {
       let message = snapshot.val().ema55Above13Emabelow.data.map(obj => `*${obj.nsecode}*                ${obj.close}  \n https://in.tradingview.com/chart/?symbol=${obj.nsecode}`).join('\n\n');
       if(message)
