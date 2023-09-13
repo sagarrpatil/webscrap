@@ -164,31 +164,51 @@ app.listen(process.env.PORT || PORT, () => {
     console.log('listening on *:' + PORT);
 });
   
-const getSecurityVolumeDeliveru = async(symbol) =>{
-try{
-  await axios.get("https://www.nseindia.com/report-detail/eq_security").then(async (response)=>{
-    let config = {
-      headers: {
-        "Cookie": response.headers['set-cookie'].join('; ')
-      }
+const getSecurityVolumeDeliveru = async(symbol, config) =>{
+    try{
+        await axios.get(`https://www.nseindia.com/api/historical/securityArchives?from=${moment().subtract(100, "days").format("DD-MM-YYYY")}&to=${moment().format("DD-MM-YYYY")}&symbol=${symbol}&dataType=priceVolumeDeliverable&series=ALL`, config).then(resp=>{
+          database.ref(` stocksDeliveryHolding/`+symbol).set(resp.data.data);
+        })
+    }catch (error) {
+      console.log(error)
     }
-    await axios.get(`https://www.nseindia.com/api/historical/securityArchives?from=${moment().subtract(100, "days").format("DD-MM-YYYY")}&to=${moment().format("DD-MM-YYYY")}&symbol=${symbol}&dataType=priceVolumeDeliverable&series=ALL`, config).then(resp=>{
-      database.ref(` stocksDeliveryHolding/`+symbol).set(resp.data.data);
-    })
-  })
-}catch (error) {
-  console.log(error)
-}
 }
 
 const Symbols =[
   "ABB", "ACC",  "ADANIENSOL", "ADANIENT",  "ADANIGREEN",  "ADANIPORTS",  "ATGL",   "AWL",   "AMBUJACEM",   "APOLLOHOSP",  "ASIANPAINT",   "DMART",  "AXISBANK",  "BAJAJ-AUTO",   "BAJFINANCE", "BAJAJFINSV", "BAJAJHLDNG", "BANKBARODA", "BERGEPAINT", "BEL", "BPCL", "BHARTIARTL", "BOSCHLTD", "BRITANNIA", "CANBK", "CHOLAFIN", "CIPLA", "COALINDIA", "COLPAL", "DLF", "DABUR", "DIVISLAB", "DRREDDY", "EICHERMOT", "NYKAA","GAIL", "GODREJCP", "GRASIM", "HCLTECH", "HDFCAMC", "HDFCBANK", "HDFCLIFE", "HAVELLS", "HEROMOTOCO", "HINDALCO", "HAL", "HINDUNILVR", "ICICIBANK", "ICICIGI", "ICICIPRULI", "ITC", "IOC", "IRCTC", "INDUSTOWER", "INDUSINDBK", "NAUKRI", "INFY", "INDIGO", "JSWSTEEL", "JINDALSTEL", "KOTAKBANK", "LTIM", "LT", "LICI", "M&M","MARICO", "MARUTI", "MUTHOOTFIN", "NTPC", "NESTLEIND", "ONGC", "PIIND", "PAGEIND", "PIDILITIND", "POWERGRID", "PGHH", "RELIANCE", "SBICARD", "SBILIFE", "SRF", "MOTHERSON", "SHREECEM", "SIEMENS", "SBIN", "SUNPHARMA", "TCS", "TATACONSUM", "TATAMOTORS", "TATAPOWER", "TATASTEEL", "TECHM", "TITAN", "TORNTPHARM", "UPL", "ULTRACEMCO", "MCDOWELL-N", "VBL", "VEDL", "WIPRO", "ZOMATO",
   "AUBANK", "ABBOTINDIA", "ABCAPITAL", "ALKEM", "ASHOKLEY", "ASTRAL", "AUROPHARMA", "BALKRISIND", "BANDHANBNK", "BATAINDIA", "BHARATFORG", "BIOCON", "COFORGE", "CONCOR", "CUMMINSIND", "ESCORTS", "FEDERALBNK", "GODREJPROP", "GUJGASLTD", "HINDPETRO", "HONAUT", "IDFCFIRSTB", "INDHOTEL", "JUBLFOOD", "LTTS", "LICHSGFIN","LUPIN", "MRF", "M&MFIN", "MFSL", "MPHASIS", "NMDC", "OBEROIRLTY", "OFSS", "PERSISTENT", "PETRONET", "POLYCAB", "PFC", "PNB", "RECLTD", "SHRIRAMFIN", "SAIL", "TVSMOTOR", "TATACOMM", "TRENT", "UBL", "IDEA", "VOLTAS", "ZEEL", "ZYDUSLIFE"
 ]
+
+const getValueofDelivery = async () =>{
+  try{
+    let configHeader = {
+      headers: {
+        "User-Agent" : "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11",
+        "Referer" : "https://www1.nseindia.com/products/content/equities/equities/archieve_eq.htm"
+      }
+    }
+    await axios.get("https://www.nseindia.com/report-detail/eq_security", configHeader).then(async (response)=>{
+     let config = {
+       headers: {
+         "Cookie": response.headers['set-cookie'].join('; '),
+         "User-Agent" : "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11",
+         "Referer" : "https://www1.nseindia.com/products/content/equities/equities/archieve_eq.htm"
+       }
+     }
+       Symbols.map(val=>{
+        getSecurityVolumeDeliveru(val, config)
+       })
+ })
+}catch (error) {
+   console.log(error.response.data)
+ }
+}
 cron.schedule('0 17 * * 1-5',  () => {
-    Symbols.map(val=>{
-      getSecurityVolumeDeliveru(val)
-    })
+  getValueofDelivery()
 })
 
 
+// database.ref(`/stocksDeliveryHolding/ABB`).once('value').then(async (snapshot)=> {
+//   let marketDelivery = await snapshot.val()
+//   // console.log("====", marketDelivery)
+// })
