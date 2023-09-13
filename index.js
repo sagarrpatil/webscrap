@@ -184,7 +184,7 @@ const getValueofDelivery = async () =>{
     let configHeader = {
       headers: {
         "User-Agent" : "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11",
-        "Referer" : "https://www1.nseindia.com/products/content/equities/equities/archieve_eq.htm"
+        "Referer" : "https://www.nseindia.com/report-detail/eq_security"
       }
     }
     await axios.get("https://www.nseindia.com/report-detail/eq_security", configHeader).then(async (response)=>{
@@ -192,11 +192,13 @@ const getValueofDelivery = async () =>{
        headers: {
          "Cookie": response.headers['set-cookie'].join('; '),
          "User-Agent" : "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11",
-         "Referer" : "https://www1.nseindia.com/products/content/equities/equities/archieve_eq.htm"
+         "Referer" : "https://www.nseindia.com/report-detail/eq_security"
        }
      }
        Symbols.map(val=>{
+        setTimeout(() => {
         getSecurityVolumeDeliveru(val, config)
+      }, "30000");
        })
  })
 }catch (error) {
