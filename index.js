@@ -242,6 +242,21 @@ cron.schedule('0 17 * * 1-5', () => {
 })
 
 
-// database.ref(`/stocksDeliveryHolding/ACC`).once('value').then((snapshot)=> {
-//   console.log("====", snapshot.val())
-// })
+
+const sendHoldingMyMessage =() =>{
+database.ref(`/stocksDeliveryHolding/`+"date"+String(moment().format("DDMMYYYY"))).orderByChild("DeliveryPercent").startAt(70).once('value').then((snapshot)=> {
+  var resultsArray = [];
+  snapshot.forEach(function(childSnapshot) {
+    var item = childSnapshot.val();
+    resultsArray.push(item);
+  });
+  let message =  resultsArray?.map(obj => `*${obj.symbol}*        Holding%: *${obj.DeliveryPercent}* \nCMP: *${obj.lastPrice}*     Holding5days% : *${obj.Delivery5AvgDaysPercent}* `).join('\n\n\n');
+   if(message)
+  //  for (let i = 0; i < phoneNumber.length; i++) {
+     getWhatsappData(`Today's Holding by Big Invester\n\n\n` + message, phoneNumber[0])
+  //  }
+})
+}
+cron.schedule('30 17 * * 1-5', () => {
+  sendHoldingMyMessage();
+})
