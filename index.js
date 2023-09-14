@@ -129,7 +129,7 @@ getValue();
 
 const getWhatsappInitailize = async (message, phone) =>{
   try{
-    await axios.get("https://graph.facebook.com/v2.10/oauth/access_token?grant_type=fb_exchange_token&client_id=296113739720920&client_secret=3ed23567bd175be409952a1db7642788&fb_exchange_token=EAAENUFpE6NgBOwVLTYIF1rGIz9w7TfIUZAyXu3ixCwbeJ4JYRljPL8RGQ9vlOVSt0TnM3ROVIXXBuDwnDOZBjM99fJxg0uR1ZCdjgzpEkNZCWB2ZAdOks57uZCcwMVScMBhPhMIeucG0wvDjzbJsXeaPK3Fu3CK6Ol8bKQgcG7ZA3yFGJ5b8pAt3lplCioZChZALZA")
+    await axios.get("https://graph.facebook.com/v2.10/oauth/access_token?grant_type=fb_exchange_token&client_id=296113739720920&client_secret=3ed23567bd175be409952a1db7642788&fb_exchange_token=EAAENUFpE6NgBO0g1AUZA1FVrSS61DVSOTvXMTdhiMCz8zYZA9sKRdQ9tNnVNpmTeb918DOFmEyoX51GimEieiwDtHZBbfkZAkraZB5jfY1ElZBcdWSO2Kf4gbNyerZAmSKQS51hDupIiZASmRYbf3wbjv2JH1xtkkA6hdWRYLKOUmHAgQqdPTHj1Uaiv16piOun6")
     .then(async (resp)=>{
       // console.log(resp.data.access_token)
       let config = {
