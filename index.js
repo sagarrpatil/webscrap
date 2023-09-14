@@ -129,7 +129,7 @@ getValue();
 
 const getWhatsappInitailize = async (message, phone) =>{
   try{
-    await axios.get("https://graph.facebook.com/v2.10/oauth/access_token?grant_type=fb_exchange_token&client_id=296113739720920&client_secret=3ed23567bd175be409952a1db7642788&fb_exchange_token=EAAENUFpE6NgBO1pQBklVBzlZApVFAFlOiYpdHWkbZBK9axWbMmkZCJ3MFKdYAzTDwc8spOElGM2I3LnO0Y5DY4HpujMIELFEwW4GRp5AX0x7hwzRZC0vxXfSEVJ1iTSvBEhnniC7y7bwvM0hrODvmT1ZBHTFzakxZCek87tbaYqWWHC3Kq8CB7FfryBk70FJ9nRTPecTvZBQYoncwuqJV3ZCgnwZD")
+    await axios.get("https://graph.facebook.com/v2.10/oauth/access_token?grant_type=fb_exchange_token&client_id=296113739720920&client_secret=3ed23567bd175be409952a1db7642788&fb_exchange_token=EAAENUFpE6NgBOwVLTYIF1rGIz9w7TfIUZAyXu3ixCwbeJ4JYRljPL8RGQ9vlOVSt0TnM3ROVIXXBuDwnDOZBjM99fJxg0uR1ZCdjgzpEkNZCWB2ZAdOks57uZCcwMVScMBhPhMIeucG0wvDjzbJsXeaPK3Fu3CK6Ol8bKQgcG7ZA3yFGJ5b8pAt3lplCioZChZALZA")
     .then(async (resp)=>{
       // console.log(resp.data.access_token)
       let config = {
@@ -168,6 +168,8 @@ const getSecurityVolumeDeliveru = async(symbol, config) =>{
     try{
         await axios.get(`https://www.nseindia.com/api/historical/securityArchives?from=${moment().subtract(100, "days").format("DD-MM-YYYY")}&to=${moment().format("DD-MM-YYYY")}&symbol=${symbol}&dataType=priceVolumeDeliverable&series=ALL`, config).then(resp=>{
           database.ref(` stocksDeliveryHolding/`+symbol).set(resp.data.data);
+        }).catch(error => {
+          console.error('Unhandled promise rejection:', error);
         })
     }catch (error) {
       console.log(error)
@@ -179,7 +181,7 @@ const Symbols =[
   "AUBANK", "ABBOTINDIA", "ABCAPITAL", "ALKEM", "ASHOKLEY", "ASTRAL", "AUROPHARMA", "BALKRISIND", "BANDHANBNK", "BATAINDIA", "BHARATFORG", "BIOCON", "COFORGE", "CONCOR", "CUMMINSIND", "ESCORTS", "FEDERALBNK", "GODREJPROP", "GUJGASLTD", "HINDPETRO", "HONAUT", "IDFCFIRSTB", "INDHOTEL", "JUBLFOOD", "LTTS", "LICHSGFIN","LUPIN", "MRF", "M&MFIN", "MFSL", "MPHASIS", "NMDC", "OBEROIRLTY", "OFSS", "PERSISTENT", "PETRONET", "POLYCAB", "PFC", "PNB", "RECLTD", "SHRIRAMFIN", "SAIL", "TVSMOTOR", "TATACOMM", "TRENT", "UBL", "IDEA", "VOLTAS", "ZEEL", "ZYDUSLIFE"
 ]
 
-const getValueofDelivery = async () =>{
+const getValueofDelivery = async (symbol) =>{
   try{
     let configHeader = {
       headers: {
@@ -195,19 +197,24 @@ const getValueofDelivery = async () =>{
          "Referer" : "https://www.nseindia.com/report-detail/eq_security"
        }
      }
-       Symbols.map(val=>{
-        setTimeout(() => {
-        getSecurityVolumeDeliveru(val, config)
-      }, "30000");
-       })
- })
+      //  Symbols.map(val=>{
+        // setTimeout(async () => {
+       getSecurityVolumeDeliveru(symbol, config)
+      // }, "30000");
+      //  })
+ }).catch(error => {
+  console.error('Unhandled promise rejection:', error);
+})
 }catch (error) {
    console.log(error.response.data)
  }
 }
-cron.schedule('0 17 * * 1-5',  () => {
-  getValueofDelivery()
-})
+// cron.schedule('0 17 * * 1-5',  () => {
+  app.get('/symbol/:itemId', (req, res) => {
+    res.send({symbol: req.params.itemId})
+    getValueofDelivery(req.params.itemId)
+  })
+// })
 
 
 // database.ref(`/stocksDeliveryHolding/ABB`).once('value').then(async (snapshot)=> {
