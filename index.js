@@ -252,9 +252,9 @@ database.ref(`/stocksDeliveryHolding/`+"date"+String(moment().format("DDMMYYYY")
   });
   let message =  resultsArray?.map(obj => `*${obj.symbol}*        Holding%: *${obj.DeliveryPercent}* \nCMP: *${obj.lastPrice}*     Holding5days% : *${obj.Delivery5AvgDaysPercent}* `).join('\n\n\n');
    if(message)
-  //  for (let i = 0; i < phoneNumber.length; i++) {
-     getWhatsappData(`Today's Holding by Big Invester\n\n\n` + message, phoneNumber[0])
-  //  }
+   for (let i = 0; i < phoneNumber.length; i++) {
+     getWhatsappData(`Today's Holding by Big Invester\n\n\n` + message, phoneNumber[i])
+   }
 })
 }
 cron.schedule('30 17 * * 1-5', () => {
