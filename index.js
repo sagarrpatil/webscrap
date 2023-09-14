@@ -13,14 +13,14 @@ app.use(cors({
 const PORT = 9000;
 const moment = require('moment');
 var firebaseConfig = {
-  apiKey: "AIzaSyCitIWt3V5aai8NG4tyI2KF_Ui-ZlCrb44",
-   authDomain: "nsedata-ff96f.firebaseapp.com",
-   databaseURL: "https://nsedata-ff96f-default-rtdb.firebaseio.com",
-   projectId: "nsedata-ff96f",
-   storageBucket: "nsedata-ff96f.appspot.com",
-   messagingSenderId: "388400964319",
-   appId: "1:388400964319:web:6304a98cb08fd6c0513f6a",
-   measurementId: "G-W7W4SBFEBV"
+  apiKey: "AIzaSyDkoGMgvAmfDUW3h0LmYH8LbZrinsYEyAA",
+  authDomain: "studebok.firebaseapp.com",
+  databaseURL: "https://studebok-default-rtdb.firebaseio.com",
+  projectId: "studebok",
+  storageBucket: "studebok.appspot.com",
+  messagingSenderId: "613111157977",
+  appId: "1:613111157977:web:1e52da162477a390d65ac8",
+  measurementId: "G-NQYE95LQ5Z"
 };
 firebase.initializeApp(firebaseConfig)
 let database = firebase.database()
@@ -164,60 +164,84 @@ app.listen(process.env.PORT || PORT, () => {
     console.log('listening on *:' + PORT);
 });
   
-const getSecurityVolumeDeliveru = async(symbol, config) =>{
-    try{
-        await axios.get(`https://www.nseindia.com/api/historical/securityArchives?from=${moment().subtract(100, "days").format("DD-MM-YYYY")}&to=${moment().format("DD-MM-YYYY")}&symbol=${symbol}&dataType=priceVolumeDeliverable&series=ALL`, config).then(resp=>{
-          database.ref(` stocksDeliveryHolding/`+symbol).set(resp.data.data);
-        }).catch(error => {
-          console.error('Unhandled promise rejection:', error);
-        })
-    }catch (error) {
-      console.log(error)
-    }
-}
 
-const Symbols =[
-  "ABB", "ACC",  "ADANIENSOL", "ADANIENT",  "ADANIGREEN",  "ADANIPORTS",  "ATGL",   "AWL",   "AMBUJACEM",   "APOLLOHOSP",  "ASIANPAINT",   "DMART",  "AXISBANK",  "BAJAJ-AUTO",   "BAJFINANCE", "BAJAJFINSV", "BAJAJHLDNG", "BANKBARODA", "BERGEPAINT", "BEL", "BPCL", "BHARTIARTL", "BOSCHLTD", "BRITANNIA", "CANBK", "CHOLAFIN", "CIPLA", "COALINDIA", "COLPAL", "DLF", "DABUR", "DIVISLAB", "DRREDDY", "EICHERMOT", "NYKAA","GAIL", "GODREJCP", "GRASIM", "HCLTECH", "HDFCAMC", "HDFCBANK", "HDFCLIFE", "HAVELLS", "HEROMOTOCO", "HINDALCO", "HAL", "HINDUNILVR", "ICICIBANK", "ICICIGI", "ICICIPRULI", "ITC", "IOC", "IRCTC", "INDUSTOWER", "INDUSINDBK", "NAUKRI", "INFY", "INDIGO", "JSWSTEEL", "JINDALSTEL", "KOTAKBANK", "LTIM", "LT", "LICI", "M&M","MARICO", "MARUTI", "MUTHOOTFIN", "NTPC", "NESTLEIND", "ONGC", "PIIND", "PAGEIND", "PIDILITIND", "POWERGRID", "PGHH", "RELIANCE", "SBICARD", "SBILIFE", "SRF", "MOTHERSON", "SHREECEM", "SIEMENS", "SBIN", "SUNPHARMA", "TCS", "TATACONSUM", "TATAMOTORS", "TATAPOWER", "TATASTEEL", "TECHM", "TITAN", "TORNTPHARM", "UPL", "ULTRACEMCO", "MCDOWELL-N", "VBL", "VEDL", "WIPRO", "ZOMATO",
-  "AUBANK", "ABBOTINDIA", "ABCAPITAL", "ALKEM", "ASHOKLEY", "ASTRAL", "AUROPHARMA", "BALKRISIND", "BANDHANBNK", "BATAINDIA", "BHARATFORG", "BIOCON", "COFORGE", "CONCOR", "CUMMINSIND", "ESCORTS", "FEDERALBNK", "GODREJPROP", "GUJGASLTD", "HINDPETRO", "HONAUT", "IDFCFIRSTB", "INDHOTEL", "JUBLFOOD", "LTTS", "LICHSGFIN","LUPIN", "MRF", "M&MFIN", "MFSL", "MPHASIS", "NMDC", "OBEROIRLTY", "OFSS", "PERSISTENT", "PETRONET", "POLYCAB", "PFC", "PNB", "RECLTD", "SHRIRAMFIN", "SAIL", "TVSMOTOR", "TATACOMM", "TRENT", "UBL", "IDEA", "VOLTAS", "ZEEL", "ZYDUSLIFE"
-]
 
-const getValueofDelivery = async (symbol) =>{
+const getValueofDelivery = async () =>{
   try{
     let configHeader = {
       headers: {
-        "User-Agent" : "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11",
-        "Referer" : "https://www.nseindia.com/report-detail/eq_security"
+        "User-Agent" : "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
       }
     }
-    await axios.get("https://www.nseindia.com/report-detail/eq_security", configHeader).then(async (response)=>{
-     let config = {
-       headers: {
-         "Cookie": response.headers['set-cookie'].join('; '),
-         "User-Agent" : "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11",
-         "Referer" : "https://www.nseindia.com/report-detail/eq_security"
-       }
-     }
-      //  Symbols.map(val=>{
-        // setTimeout(async () => {
-       getSecurityVolumeDeliveru(symbol, config)
-      // }, "30000");
-      //  })
- }).catch(error => {
+    await axios.get("https://www.moneycontrol.com/india/stockmarket/stock-deliverables/marketstatistics/indices/cnx-100.html", configHeader).then(async (response)=>{
+    const $ = cheerio.load(response.data);
+    const tableRows = $('table tr');
+    const tableData = [];
+    let date = "date"+String(moment().format("DDMMYYYY"))
+    tableRows.each((index, element) => {
+      const tableColumns = $(element).find('td'); // Adjust the selector for columns
+      const rowData = [];
+      tableColumns.each((i, el) => {
+        rowData.push($(el).text().trim());
+      });
+      tableData.push(rowData);
+    });
+    const jsonData1 = tableData.map((row) => {
+      const obj = {};
+      obj.symbol = row[0];
+      obj.lastPrice = row[1];
+      obj.Chg = row[2];
+      obj.ChgPercent = row[3];
+      obj.DeliveryPercent = Number(row[4]);
+      obj.Delivery5AvgDaysPercent = Number(row[5]);
+      obj.DeliveryVol = row[6];
+      obj.Delivery5AvgVol = row[7];
+      obj.tradeVol = row[8];
+      return obj;
+    });
+    database.ref(`/stocksDeliveryHolding/`+date).set(jsonData1.filter((val)=> val.DeliveryPercent), async() =>{
+      await axios.get("https://www.moneycontrol.com/india/stockmarket/stock-deliverables/marketstatistics/indices/nifty-midcap-50.html", configHeader).then(async (response)=>{
+        const $ = cheerio.load(response.data);
+        const tableRows = $('table tr');
+        const tableData = [];
+        let date = "date"+String(moment().format("DDMMYYYY"))
+        tableRows.each((index, element) => {
+          const tableColumns = $(element).find('td'); // Adjust the selector for columns
+          const rowData = [];
+          tableColumns.each((i, el) => {
+            rowData.push($(el).text().trim());
+          });
+          tableData.push(rowData);
+        });
+        const jsonData = tableData.map((row) => {
+          const obj = {};
+          obj.symbol = row[0];
+          obj.lastPrice = row[1];
+          obj.Chg = row[2];
+          obj.ChgPercent = row[3];
+          obj.DeliveryPercent = Number(row[4]);
+          obj.Delivery5AvgDaysPercent = Number(row[5]);
+          obj.DeliveryVol = row[6];
+          obj.Delivery5AvgVol = row[7];
+          obj.tradeVol = row[8];
+          return obj;
+        });
+        let obj = [...jsonData1, ...jsonData];
+        database.ref(`/stocksDeliveryHolding/`+date).set(obj.filter((val)=> val.DeliveryPercent))
+      })
+    })
+    }).catch(error => {
   console.error('Unhandled promise rejection:', error);
 })
 }catch (error) {
    console.log(error.response.data)
  }
 }
-// cron.schedule('0 17 * * 1-5',  () => {
-  app.get('/symbol/:itemId', (req, res) => {
-    res.send({symbol: req.params.itemId})
-    getValueofDelivery(req.params.itemId)
-  })
-// })
+cron.schedule('0 17 * * 1-5', () => {
+  getValueofDelivery();
+})
 
 
-// database.ref(`/stocksDeliveryHolding/ABB`).once('value').then(async (snapshot)=> {
-//   let marketDelivery = await snapshot.val()
-//   // console.log("====", marketDelivery)
+// database.ref(`/stocksDeliveryHolding/ACC`).once('value').then((snapshot)=> {
+//   console.log("====", snapshot.val())
 // })
