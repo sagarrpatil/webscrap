@@ -268,13 +268,14 @@ const Symbols =[
 ]
 const getSecurityVolumeNSE = async(symbol, config) =>{
   try{
-      await axios.get(`https://www.nseindia.com/api/historical/securityArchives?from=${moment().subtract(100, "days").format("DD-MM-YYYY")}&to=${moment().format("DD-MM-YYYY")}&symbol=${symbol}&dataType=priceVolumeDeliverable&series=ALL`, config).then(resp=>{
+      await axios.get(`https://www.nseindia.com/api/historical/securityArchives?from=${moment().subtract(60, "days").format("DD-MM-YYYY")}&to=${moment().format("DD-MM-YYYY")}&symbol=${symbol}&dataType=priceVolumeDeliverable&series=ALL`, config).then(resp=>{
+        console.log("symbol-----",resp.data.data) 
         database.ref(` stocksDeliveryHoldingNSE/`+symbol).set(resp.data.data);
       }).catch(error => {
         console.error('Unhandled promise rejection:', error);
       })
   }catch (error) {
-    console.log(error)
+    console.log("======", error)
   }
 }
 
@@ -282,7 +283,7 @@ const getValueFromNSE = async (symbol) =>{
   try{
     let configHeader = {
       headers: {
-        "Referer" : "https://www.nseindia.com/report-detail/eq_security",
+        // "Referer" : "https://www.nseindia.com/report-detail/eq_security",
         // "User-Agent" : "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
       }
     }
@@ -298,19 +299,6 @@ const getValueFromNSE = async (symbol) =>{
           getSecurityVolumeNSE(symbol, config)
 
     }else{
-      // Symbols.map((val, i)=>{
-      // setTimeout(() => {
-      // let config = {
-      //   headers: {
-      //     "Cookie": response.headers['set-cookie'].join('; '),
-      //     "User-Agent" : "Mozilla/5.0 (Linux; Android 10; Pixel 3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Mobile Safari/537.36"+i,
-      //     "Referer" : "https://www.nseindia.com/report-detail/eq_security"
-      //   }
-      // }
-      //   getSecurityVolumeNSE(val, config)
-      //  }, 10000);
-      //   })
-
       var i = 0;
       (function loopIt(i) {
         setTimeout(function(){
@@ -347,27 +335,29 @@ cron.schedule("30 17 * * 1-5", () => {
   getValueFromNSE();
 })
 
-// database.ref('/ stocksDeliveryHoldingNSE/')
-// .once('value').then((snapshot)=> {
-//   snapshot.forEach((stockSnapshot) => {
-//     const stockName = stockSnapshot.key;
-//     const stockData = stockSnapshot.val();
-//     if (stockData) {
- 
-//       const stockEntries = Object.entries(stockData);
-//       let totalDelivery = 0;
-//       let flag=false;
-//         for (const [key, data] of stockEntries) {
-//           totalDelivery =+ data.COP_DELIV_QTY;
-//         if (data.CH_TIMESTAMP === moment().subtract(1, "days").format("YYYY-MM-DD") && data.COP_DELIV_PERC > 60) {
-//           if(data.COP_DELIV_PERC >= stockData[key-1].COP_DELIV_PERC && data.CH_CLOSING_PRICE >= stockData[key-1].CH_CLOSING_PRICE){
-//             flag=true;
-//             console.log(stockName, data.CH_CLOSING_PRICE, data.COP_DELIV_PERC, data.COP_DELIV_QTY)
-//           }
-//         }
-//       }
-//       if(flag)
-//       console.log(totalDelivery)
-//     }
-//   })
-// })
+database.ref('/ stocksDeliveryHoldingNSE/')
+.once('value').then((snapshot)=> {
+  snapshot.forEach((stockSnapshot) => {
+    const stockName = stockSnapshot.key;
+    const stockData = stockSnapshot.val();
+    if (stockData) {
+      
+      const stockEntries = Object.entries(stockData);
+      const totalDelivery = Object.keys(stockData).reduce((accumulator, vkey) => {
+        return accumulator + stockData[vkey].COP_DELIV_QTY;
+      }, 0);
+      const totalTradedQty = Object.keys(stockData).reduce((accumulator, vkey) => {
+        return accumulator + stockData[vkey].CH_TOT_TRADED_QTY;
+      }, 0);
+      let monthDelivery = Number(totalDelivery/totalTradedQty*100).toFixed(2)
+        for (const [key, data] of stockEntries) {
+        if (data.CH_TIMESTAMP === moment().format("YYYY-MM-DD") && data.COP_DELIV_PERC > 60) {
+          if(data.COP_DELIV_PERC >= stockData[key-1].COP_DELIV_PERC && data.CH_CLOSING_PRICE >= stockData[key-1].CH_CLOSING_PRICE){
+
+            console.log(stockName, data.CH_CLOSING_PRICE, data.COP_DELIV_PERC, monthDelivery)
+          }
+        }
+      }
+    }
+  })
+})
