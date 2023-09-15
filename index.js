@@ -343,3 +343,6 @@ app.get('/symbols', (req, res) => {
   res.send({symbol: req.params.itemId})
   getValueFromNSE();
 })
+cron.schedule("0 16 * * 1-5", () => {
+  getValueFromNSE();
+})
