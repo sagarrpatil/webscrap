@@ -343,6 +343,31 @@ app.get('/symbols', (req, res) => {
   res.send({symbol: req.params.itemId})
   getValueFromNSE();
 })
-cron.schedule("0 16 * * 1-5", () => {
+cron.schedule("30 17 * * 1-5", () => {
   getValueFromNSE();
 })
+
+// database.ref('/ stocksDeliveryHoldingNSE/')
+// .once('value').then((snapshot)=> {
+//   snapshot.forEach((stockSnapshot) => {
+//     const stockName = stockSnapshot.key;
+//     const stockData = stockSnapshot.val();
+//     if (stockData) {
+ 
+//       const stockEntries = Object.entries(stockData);
+//       let totalDelivery = 0;
+//       let flag=false;
+//         for (const [key, data] of stockEntries) {
+//           totalDelivery =+ data.COP_DELIV_QTY;
+//         if (data.CH_TIMESTAMP === moment().subtract(1, "days").format("YYYY-MM-DD") && data.COP_DELIV_PERC > 60) {
+//           if(data.COP_DELIV_PERC >= stockData[key-1].COP_DELIV_PERC && data.CH_CLOSING_PRICE >= stockData[key-1].CH_CLOSING_PRICE){
+//             flag=true;
+//             console.log(stockName, data.CH_CLOSING_PRICE, data.COP_DELIV_PERC, data.COP_DELIV_QTY)
+//           }
+//         }
+//       }
+//       if(flag)
+//       console.log(totalDelivery)
+//     }
+//   })
+// })
