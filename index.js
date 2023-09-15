@@ -260,3 +260,86 @@ database.ref(`/stocksDeliveryHolding/`+"date"+String(moment().format("DDMMYYYY")
 cron.schedule('30 17 * * 1-5', () => {
   sendHoldingMyMessage();
 })
+
+
+const Symbols =[
+  "ABB", "ACC",  "ADANIENSOL", "ADANIENT",  "ADANIGREEN",  "ADANIPORTS",  "ATGL",   "AWL",   "AMBUJACEM",   "APOLLOHOSP",  "ASIANPAINT",   "DMART",  "AXISBANK",  "BAJAJ-AUTO",   "BAJFINANCE", "BAJAJFINSV", "BAJAJHLDNG", "BANKBARODA", "BERGEPAINT", "BEL", "BPCL", "BHARTIARTL", "BOSCHLTD", "BRITANNIA", "CANBK", "CHOLAFIN", "CIPLA", "COALINDIA", "COLPAL", "DLF", "DABUR", "DIVISLAB", "DRREDDY", "EICHERMOT", "NYKAA","GAIL", "GODREJCP", "GRASIM", "HCLTECH", "HDFCAMC", "HDFCBANK", "HDFCLIFE", "HAVELLS", "HEROMOTOCO", "HINDALCO", "HAL", "HINDUNILVR", "ICICIBANK", "ICICIGI", "ICICIPRULI", "ITC", "IOC", "IRCTC", "INDUSTOWER", "INDUSINDBK", "NAUKRI", "INFY", "INDIGO", "JSWSTEEL", "JINDALSTEL", "KOTAKBANK", "LTIM", "LT", "LICI", "M&M","MARICO", "MARUTI", "MUTHOOTFIN", "NTPC", "NESTLEIND", "ONGC", "PIIND", "PAGEIND", "PIDILITIND", "POWERGRID", "PGHH", "RELIANCE", "SBICARD", "SBILIFE", "SRF", "MOTHERSON", "SHREECEM", "SIEMENS", "SBIN", "SUNPHARMA", "TCS", "TATACONSUM", "TATAMOTORS", "TATAPOWER", "TATASTEEL", "TECHM", "TITAN", "TORNTPHARM", "UPL", "ULTRACEMCO", "MCDOWELL-N", "VBL", "VEDL", "WIPRO", "ZOMATO",
+  "AUBANK", "ABBOTINDIA", "ABCAPITAL", "ALKEM", "ASHOKLEY", "ASTRAL", "AUROPHARMA", "BALKRISIND", "BANDHANBNK", "BATAINDIA", "BHARATFORG", "BIOCON", "COFORGE", "CONCOR", "CUMMINSIND", "ESCORTS", "FEDERALBNK", "GODREJPROP", "GUJGASLTD", "HINDPETRO", "HONAUT", "IDFCFIRSTB", "INDHOTEL", "JUBLFOOD", "LTTS", "LICHSGFIN","LUPIN", "MRF", "M&MFIN", "MFSL", "MPHASIS", "NMDC", "OBEROIRLTY", "OFSS", "PERSISTENT", "PETRONET", "POLYCAB", "PFC", "PNB", "RECLTD", "SHRIRAMFIN", "SAIL", "TVSMOTOR", "TATACOMM", "TRENT", "UBL", "IDEA", "VOLTAS", "ZEEL", "ZYDUSLIFE"
+]
+const getSecurityVolumeNSE = async(symbol, config) =>{
+  try{
+      await axios.get(`https://www.nseindia.com/api/historical/securityArchives?from=${moment().subtract(100, "days").format("DD-MM-YYYY")}&to=${moment().format("DD-MM-YYYY")}&symbol=${symbol}&dataType=priceVolumeDeliverable&series=ALL`, config).then(resp=>{
+        database.ref(` stocksDeliveryHoldingNSE/`+symbol).set(resp.data.data);
+      }).catch(error => {
+        console.error('Unhandled promise rejection:', error);
+      })
+  }catch (error) {
+    console.log(error)
+  }
+}
+
+const getValueFromNSE = async (symbol) =>{
+  try{
+    let configHeader = {
+      headers: {
+        "Referer" : "https://www.nseindia.com/report-detail/eq_security",
+        // "User-Agent" : "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
+      }
+    }
+    await axios.get("https://www.nseindia.com/report-detail/eq_security", configHeader).then(async (response)=>{
+    if(symbol){
+     let config = {
+       headers: {
+         "Cookie": response.headers['set-cookie'].join('; '),
+         "User-Agent" : "Mozilla/5.0 (Linux; Android 10; Pixel 3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Mobile Safari/537.36",
+         "Referer" : "https://www.nseindia.com/report-detail/eq_security"
+       }
+     }
+          getSecurityVolumeNSE(symbol, config)
+
+    }else{
+      // Symbols.map((val, i)=>{
+      // setTimeout(() => {
+      // let config = {
+      //   headers: {
+      //     "Cookie": response.headers['set-cookie'].join('; '),
+      //     "User-Agent" : "Mozilla/5.0 (Linux; Android 10; Pixel 3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Mobile Safari/537.36"+i,
+      //     "Referer" : "https://www.nseindia.com/report-detail/eq_security"
+      //   }
+      // }
+      //   getSecurityVolumeNSE(val, config)
+      //  }, 10000);
+      //   })
+
+      var i = 0;
+      (function loopIt(i) {
+        setTimeout(function(){
+          let config = {
+            headers: {
+              "Cookie": response.headers['set-cookie'].join('; '),
+              "User-Agent" : "Mozilla/5.0 (Linux; Android 10; Pixel 3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Mobile Safari/537.36"+i,
+              "Referer" : "https://www.nseindia.com/report-detail/eq_security"
+            }
+          }
+          getSecurityVolumeNSE(Symbols[i], config)
+            console.log(Symbols[i]);
+            if(i < Symbols.length - 1)  loopIt(i+1)
+          }, 10000);
+      })(i)
+      }
+    }).catch(error => {
+      console.log(error)
+      }) 
+  } catch (error) {
+      console.log(error.response.data)
+  }
+}
+app.get('/symbol/:itemId', (req, res) => {
+  res.send({symbol: req.params.itemId})
+  getValueFromNSE(req.params.itemId)
+})
+
+app.get('/symbols', (req, res) => {
+  res.send({symbol: req.params.itemId})
+  getValueFromNSE();
+})
