@@ -335,13 +335,19 @@ cron.schedule("30 17 * * 1-5", () => {
   getValueFromNSE();
 })
 
+
+const getNSEDataFromDatabase = () =>{
 database.ref('/ stocksDeliveryHoldingNSE/')
 .once('value').then((snapshot)=> {
+  let message = `Today's Holding by Big Invester`;
+  for (let i = 0; i < phoneNumber.length; i++) {
+    getWhatsappData(message, phoneNumber[i])
+  }
   snapshot.forEach((stockSnapshot) => {
     const stockName = stockSnapshot.key;
     const stockData = stockSnapshot.val();
     if (stockData) {
-      
+  
       const stockEntries = Object.entries(stockData);
       const totalDelivery = Object.keys(stockData).reduce((accumulator, vkey) => {
         return accumulator + stockData[vkey].COP_DELIV_QTY;
@@ -352,12 +358,21 @@ database.ref('/ stocksDeliveryHoldingNSE/')
       let monthDelivery = Number(totalDelivery/totalTradedQty*100).toFixed(2)
         for (const [key, data] of stockEntries) {
         if (data.CH_TIMESTAMP === moment().format("YYYY-MM-DD") && data.COP_DELIV_PERC > 60) {
-          if(data.COP_DELIV_PERC >= stockData[key-1].COP_DELIV_PERC && data.CH_CLOSING_PRICE >= stockData[key-1].CH_CLOSING_PRICE){
-
-            console.log(stockName, data.CH_CLOSING_PRICE, data.COP_DELIV_PERC, monthDelivery)
+          if(data.COP_DELIV_PERC >= stockData[key-1].COP_DELIV_PERC && data.CH_CLOSING_PRICE >= stockData[key-1].CH_CLOSING_PRICE && stockData[key-1].CH_CLOSING_PRICE >= stockData[key-2].CH_CLOSING_PRICE && stockData[key-1].COP_DELIV_PERC >= stockData[key-2].COP_DELIV_PERC){
+            // console.log(stockName, data.CH_CLOSING_PRICE, data.COP_DELIV_PERC, monthDelivery)
+            let dataMessage=`*${stockName}*        Holding%: *${data.COP_DELIV_PERC}* \nCMP: *${data.CH_CLOSING_PRICE}*     HoldingMonth% : *${monthDelivery}* \n https://in.tradingview.com/chart/?symbol=${stockName}`
+            console.log(dataMessage)
+            for (let i = 0; i < phoneNumber.length; i++) {
+              getWhatsappData(dataMessage, phoneNumber[i])
+            }
           }
         }
       }
     }
   })
+})
+}
+
+app.get('/nse', (req, res) => {
+getNSEDataFromDatabase();
 })
