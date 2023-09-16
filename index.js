@@ -357,15 +357,47 @@ database.ref('/ stocksDeliveryHoldingNSE/')
       const totalTradedQty = Object.keys(stockData).reduce((accumulator, vkey) => {
         return accumulator + stockData[vkey].CH_TOT_TRADED_QTY;
       }, 0);
-      let monthDelivery = Number(totalDelivery/totalTradedQty*100).toFixed(2)
+      let monthDelivery = Number(totalDelivery/totalTradedQty*100).toFixed(2);
+
+      const lastThreeElements = Object.keys(stockData).slice(-3);
+      const sumOfLastThreeDelivery = lastThreeElements.reduce((accumulator, vkey) => {
+        return accumulator + stockData[vkey].COP_DELIV_QTY;
+      }, 0);
+      const sumOfLastThreetotalTradedQty = lastThreeElements.reduce((accumulator, vkey) => {
+        return accumulator + stockData[vkey].CH_TOT_TRADED_QTY;
+      }, 0);
+      let monthDeliveryThreeLast = Number(sumOfLastThreeDelivery/sumOfLastThreetotalTradedQty*100).toFixed(2);
+
+      const lastThreeElements8 = Object.keys(stockData).slice(-8);
+      const sumOfLastThreeDelivery8 = lastThreeElements8.reduce((accumulator, vkey) => {
+        return accumulator + stockData[vkey].COP_DELIV_QTY;
+      }, 0);
+      const sumOfLastThreetotalTradedQty8 = lastThreeElements8.reduce((accumulator, vkey) => {
+        return accumulator + stockData[vkey].CH_TOT_TRADED_QTY;
+      }, 0);
+      let monthDeliveryThreeLast8 = Number(sumOfLastThreeDelivery8/sumOfLastThreetotalTradedQty8*100).toFixed(2);
+
+
+      const lastThreeElements15 = Object.keys(stockData).slice(-8);
+      const sumOfLastThreeDelivery15 = lastThreeElements15.reduce((accumulator, vkey) => {
+        return accumulator + stockData[vkey].COP_DELIV_QTY;
+      }, 0);
+      const sumOfLastThreetotalTradedQty15 = lastThreeElements15.reduce((accumulator, vkey) => {
+        return accumulator + stockData[vkey].CH_TOT_TRADED_QTY;
+      }, 0);
+      let monthDeliveryThreeLast15 = Number(sumOfLastThreeDelivery15/sumOfLastThreetotalTradedQty15*100).toFixed(2);
+   
         for (const [key, data] of stockEntries) {
-        if (data.CH_TIMESTAMP === moment().format("YYYY-MM-DD") && data.COP_DELIV_PERC > 60) {
-          if(data.COP_DELIV_PERC >= stockData[key-1].COP_DELIV_PERC && data.CH_CLOSING_PRICE >= stockData[key-1].CH_CLOSING_PRICE && stockData[key-1].CH_CLOSING_PRICE >= stockData[key-2].CH_CLOSING_PRICE && stockData[key-1].COP_DELIV_PERC >= stockData[key-2].COP_DELIV_PERC){
-            // console.log(stockName, data.CH_CLOSING_PRICE, data.COP_DELIV_PERC, monthDelivery)
-            let dataMessage=`*${stockName}*        Holding%: *${data.COP_DELIV_PERC}* \nCMP: *${data.CH_CLOSING_PRICE}*     HoldingMonth% : *${monthDelivery}* \n https://in.tradingview.com/chart/?symbol=${stockName}`
-            console.log(dataMessage)
+        if (data.CH_TIMESTAMP === moment(new Date(new Date() - 86400000)).format("YYYY-MM-DD") && data.COP_DELIV_PERC > 60) {
+          if(data.COP_DELIV_PERC >= stockData[key-1].COP_DELIV_PERC && data.CH_CLOSING_PRICE > data.CH_OPENING_PRICE){
+            if(monthDeliveryThreeLast>monthDeliveryThreeLast8 && data.CH_CLOSING_PRICE >  stockData[key-3].CH_OPENING_PRICE ){
+            // if(monthDeliveryThreeLast>monthDeliveryThreeLast8)
+            console.log(stockName, data.CH_CLOSING_PRICE, data.COP_DELIV_PERC, )
+            let dataMessage=`*${stockName}*        Holding%: *${data.COP_DELIV_PERC}* \nCMP: *${data.CH_CLOSING_PRICE}*     HoldingMonth% : *${monthDelivery}* \n\n\n https://in.tradingview.com/chart/?symbol=${stockName}`
+            // console.log(dataMessage)
             for (let i = 0; i < phoneNumber.length; i++) {
               getWhatsappData(dataMessage, phoneNumber[i])
+            }
             }
           }
         }
@@ -375,6 +407,6 @@ database.ref('/ stocksDeliveryHoldingNSE/')
 })
 }
 
-app.get('/nse', (req, res) => {
+// app.get('/nse', (req, res) => {
 getNSEDataFromDatabase();
-})
+// })
