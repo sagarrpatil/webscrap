@@ -268,7 +268,7 @@ const Symbols =[
 ]
 const getSecurityVolumeNSE = async(symbol, config) =>{
   try{
-      await axios.get(`https://www.nseindia.com/api/historical/securityArchives?from=${moment().subtract(60, "days").format("DD-MM-YYYY")}&to=${moment().format("DD-MM-YYYY")}&symbol=${symbol}&dataType=priceVolumeDeliverable&series=ALL`, config).then(resp=>{
+      await axios.get(`https://www.nseindia.com/api/historical/securityArchives?from=${moment().subtract(30, "days").format("DD-MM-YYYY")}&to=${moment().format("DD-MM-YYYY")}&symbol=${symbol}&dataType=priceVolumeDeliverable&series=ALL`, config).then(resp=>{
         console.log("symbol-----",resp.data.data) 
         database.ref(` stocksDeliveryHoldingNSE/`+symbol).set(resp.data.data);
       }).catch(error => {
