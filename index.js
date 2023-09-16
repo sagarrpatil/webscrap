@@ -287,7 +287,7 @@ const getValueFromNSE = async (symbol) =>{
         "User-Agent" : "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
       }
     }
-    console.log(test)
+    console.log("test")
     await axios.get("https://www.nseindia.com/report-detail/eq_security", configHeader).then(async (response)=>{
       console.log(response.headers['set-cookie'].join('; '))
     if(symbol){
