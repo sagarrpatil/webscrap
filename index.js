@@ -37,9 +37,9 @@ const schedule = '*/10 9-16 * * 1-5';
   const getValue = async () => {
   const formData = new FormData();
   // let value = "( {33619} ( [0] 4 hour close > [0] 4 hour ema( [0] 4 hour close , 200 ) and [0] 4 hour close >= [0] 4 hour ema( [0] 4 hour close , 55 ) and market cap >= 5000 and [0] 4 hour volume > [0] 4 hour sma( [0] 4 hour close , 20 ) and [0] 4 hour close <= [0] 4 hour ema( [0] 4 hour close , 13 ) and [0] 4 hour close <= [0] 4 hour ema( [0] 4 hour close , 44 ) ) )"
-  let value = "{33489} ( latest close >= latest ema( latest close , 44 ) and latest close <= latest ema( latest close , 30 ) and latest close > latest ema( latest close , 200 ) and latest volume >= 50000 and latest close > latest open ) )"
+  let value = "( {33489} ( latest close >= latest ema( latest close , 44 ) and latest close <= latest ema( latest close , 30 ) and latest close > latest ema( latest close , 200 ) and latest volume >= 50000 and latest close > latest open ) )"
   formData.append('scan_clause', value);
-   axios.get("https://chartink.com/screener/swing-2023-09-02-20?src=wassup").then(resp=>{
+   axios.get("https://chartink.com/screener/44ema-232").then(resp=>{
     const $ = cheerio.load(resp.data);
     const csrfToken = $('meta[name="csrf-token"]').attr('content');
     let config = {
@@ -56,6 +56,7 @@ const schedule = '*/10 9-16 * * 1-5';
     })
   }
   cron.schedule(schedule, getValue);
+  getValue()
 
 
   const getWhatsappData = async (message, phone) =>{
