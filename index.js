@@ -36,7 +36,8 @@ const schedule = '*/10 9-16 * * 1-5';
   // var date=moment().utcOffset("+05:30").format("DDMMYYYY");
   const getValue = async () => {
   const formData = new FormData();
-  let value = "( {33619} ( [0] 4 hour close > [0] 4 hour ema( [0] 4 hour close , 200 ) and [0] 4 hour close >= [0] 4 hour ema( [0] 4 hour close , 55 ) and market cap >= 5000 and [0] 4 hour volume > [0] 4 hour sma( [0] 4 hour close , 20 ) and [0] 4 hour close <= [0] 4 hour ema( [0] 4 hour close , 13 ) and [0] 4 hour close <= [0] 4 hour ema( [0] 4 hour close , 44 ) ) )"
+  // let value = "( {33619} ( [0] 4 hour close > [0] 4 hour ema( [0] 4 hour close , 200 ) and [0] 4 hour close >= [0] 4 hour ema( [0] 4 hour close , 55 ) and market cap >= 5000 and [0] 4 hour volume > [0] 4 hour sma( [0] 4 hour close , 20 ) and [0] 4 hour close <= [0] 4 hour ema( [0] 4 hour close , 13 ) and [0] 4 hour close <= [0] 4 hour ema( [0] 4 hour close , 44 ) ) )"
+  let value = "{33489} ( latest close >= latest ema( latest close , 44 ) and latest close <= latest ema( latest close , 30 ) and latest close > latest ema( latest close , 200 ) and latest volume >= 50000 and latest close > latest open ) )"
   formData.append('scan_clause', value);
    axios.get("https://chartink.com/screener/swing-2023-09-02-20?src=wassup").then(resp=>{
     const $ = cheerio.load(resp.data);
@@ -388,7 +389,7 @@ database.ref('/ stocksDeliveryHoldingNSE/')
       let monthDeliveryThreeLast15 = Number(sumOfLastThreeDelivery15/sumOfLastThreetotalTradedQty15*100).toFixed(2);
    
         for (const [key, data] of stockEntries) {
-        if (data.CH_TIMESTAMP === moment(new Date(new Date() - 86400000)).format("YYYY-MM-DD") && data.COP_DELIV_PERC > 60) {
+        if (data.CH_TIMESTAMP === moment().format("YYYY-MM-DD") && data.COP_DELIV_PERC > 60) {
           if(data.COP_DELIV_PERC >= stockData[key-1].COP_DELIV_PERC && data.CH_CLOSING_PRICE > data.CH_OPENING_PRICE){
             if(monthDeliveryThreeLast>monthDeliveryThreeLast8 && data.CH_CLOSING_PRICE >  stockData[key-3].CH_OPENING_PRICE ){
             // if(monthDeliveryThreeLast>monthDeliveryThreeLast8)
@@ -407,6 +408,6 @@ database.ref('/ stocksDeliveryHoldingNSE/')
 })
 }
 
-// app.get('/nse', (req, res) => {
+app.get('/nse', (req, res) => {
 getNSEDataFromDatabase();
-// })
+})
