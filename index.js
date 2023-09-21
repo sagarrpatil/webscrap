@@ -171,12 +171,13 @@ app.listen(process.env.PORT || PORT, () => {
 });
   
 
-
+cron.schedule('* 9-16 * * 1-5', () => {
 database.ref(`/`).once('value').then((snapshot)=> {
   let val = snapshot.val().stockinstack;
   Object.keys(val).map(key => { 
     moneycontrolLivePrice(val[key])
   });
+})
 })
   const moneycontrolLivePrice = async (obj) =>{
     try{
