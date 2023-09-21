@@ -6,6 +6,8 @@ const FormData = require('form-data');
 const app = express();
 const cheerio = require('cheerio');
 const cron = require('node-cron');
+const { NseIndia } = require("stock-nse-india");
+const  nseIndia = new  NseIndia();
 const { SNSClient, PublishCommand } = require("@aws-sdk/client-sns");
 app.use(cors({
   origin: '*'
@@ -51,12 +53,14 @@ const schedule = '*/10 9-16 * * 1-5';
       axios.post("https://chartink.com/screener/process", formData, config).then((response)=>{
         console.log(response.data)
         database.ref(`/ema55Above13Emabelow`).set(response.data);
+        response.data?.data.map(val=>{
+          database.ref(`/stockinstack/`+val.nsecode).set(val);
+        })
         database.ref(`/timeOfData`).set(moment().utcOffset("+05:30").format("YYYY-MM-DD, hh:mm:ss"));
       })
     })
   }
-  cron.schedule(schedule, getValue);
-  getValue()
+  cron.schedule('30 16 * * 1-5', getValue);
 
 
   const getWhatsappData = async (message, phone) =>{
@@ -99,12 +103,12 @@ const phoneNumber = ['7057455569',
 '9881015524', "8551892121", "7588861931", "9890228501"
 ];
 
-cron.schedule('30 9-15 * * 1-5', () =>
+cron.schedule('30 17 * * 1-5', () =>
     database.ref(`/`).once('value').then((snapshot)=> {
       let message = snapshot.val().ema55Above13Emabelow?.data?.map(obj => `*${obj.nsecode}*                ${obj.close}  \n https://in.tradingview.com/chart/?symbol=${obj.nsecode}`).join('\n\n');
       if(message)
         for (let i = 0; i < phoneNumber.length; i++) {
-          getWhatsappData(`Automate Market \n\n\n` + message, phoneNumber[i])
+          getWhatsappData(`Add in your Watchlist \n\n\n` + message, phoneNumber[i])
         }
     })
 )
@@ -168,247 +172,74 @@ app.listen(process.env.PORT || PORT, () => {
   
 
 
-const getValueofDelivery = async () =>{
-  try{
-    let configHeader = {
-      headers: {
-        "User-Agent" : "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
-      }
-    }
-    await axios.get("https://www.moneycontrol.com/india/stockmarket/stock-deliverables/marketstatistics/indices/cnx-100.html", configHeader).then(async (response)=>{
-    const $ = cheerio.load(response.data);
-    const tableRows = $('table tr');
-    const tableData = [];
-    let date = "date"+String(moment().format("DDMMYYYY"))
-    tableRows.each((index, element) => {
-      const tableColumns = $(element).find('td'); // Adjust the selector for columns
-      const rowData = [];
-      tableColumns.each((i, el) => {
-        rowData.push($(el).text().trim());
-      });
-      tableData.push(rowData);
-    });
-    const jsonData1 = tableData.map((row) => {
-      const obj = {};
-      obj.symbol = row[0];
-      obj.lastPrice = row[1];
-      obj.Chg = row[2];
-      obj.ChgPercent = row[3];
-      obj.DeliveryPercent = Number(row[4]);
-      obj.Delivery5AvgDaysPercent = Number(row[5]);
-      obj.DeliveryVol = row[6];
-      obj.Delivery5AvgVol = row[7];
-      obj.tradeVol = row[8];
-      return obj;
-    });
-    database.ref(`/stocksDeliveryHolding/`+date).set(jsonData1.filter((val)=> val.DeliveryPercent), async() =>{
-      await axios.get("https://www.moneycontrol.com/india/stockmarket/stock-deliverables/marketstatistics/indices/nifty-midcap-50.html", configHeader).then(async (response)=>{
-        const $ = cheerio.load(response.data);
-        const tableRows = $('table tr');
-        const tableData = [];
-        let date = "date"+String(moment().format("DDMMYYYY"))
-        tableRows.each((index, element) => {
-          const tableColumns = $(element).find('td'); // Adjust the selector for columns
-          const rowData = [];
-          tableColumns.each((i, el) => {
-            rowData.push($(el).text().trim());
-          });
-          tableData.push(rowData);
-        });
-        const jsonData = tableData.map((row) => {
-          const obj = {};
-          obj.symbol = row[0];
-          obj.lastPrice = row[1];
-          obj.Chg = row[2];
-          obj.ChgPercent = row[3];
-          obj.DeliveryPercent = Number(row[4]);
-          obj.Delivery5AvgDaysPercent = Number(row[5]);
-          obj.DeliveryVol = row[6];
-          obj.Delivery5AvgVol = row[7];
-          obj.tradeVol = row[8];
-          return obj;
-        });
-        let obj = [...jsonData1, ...jsonData];
-        database.ref(`/stocksDeliveryHolding/`+date).set(obj.filter((val)=> val.DeliveryPercent))
+database.ref(`/`).once('value').then((snapshot)=> {
+  let val = snapshot.val().stockinstack;
+  Object.keys(val).map(key => { 
+    moneycontrolLivePrice(val[key])
+  });
+})
+  const moneycontrolLivePrice = async (obj) =>{
+    try{
+    await axios.get("https://www.moneycontrol.com/india/stockpricequote/personal-care/colgatepalmoliveindia/CPI").then(async (res)=>{
+      await axios.get(`https://priceapi.moneycontrol.com/techCharts/intra?symbol=${obj.nsecode}&resolution=1&from=${moment().subtract(1, 'days').unix()}&to=${moment().unix()}`).then(response=>{
+          console.log(obj.nsecode, response.data?.data[response.data.data.length-1].value)
+          database.ref(`/stockForBuy/`+obj.nsecode).once('value').then((snapshot)=> {
+            if(snapshot.val()?.sellAt >= response.data?.data[response.data.data.length-1].value && snapshot.val()?.entry === "pending"){
+              database.ref(`/stockForBuy/`+obj.nsecode).remove();
+              database.ref(`/stockinstack/`+obj.nsecode).remove();
+            } 
+
+            if(snapshot.val()?.sellAt >= response.data?.data[response.data.data.length-1].value && snapshot.val()?.entry === "Buy"){
+              database.ref(`/stockForBuy/`+obj.nsecode).remove();
+              database.ref(`/stockinstack/`+obj.nsecode).remove();
+              let message = `*${val[key].nsecode}* squareOff your position`
+              if(message)
+                for (let i = 0; i < phoneNumber.length; i++) {
+                  getWhatsappData(`*Stoploss hit* \n\n\n` + message, phoneNumber[i])
+                }
+            }else if(snapshot.val()?.buyAt <= response.data?.data[response.data.data.length-1].value && snapshot.val()?.entry !== "Buy"){
+              database.ref(`/stockForBuy/`+obj.nsecode+"/entry").set("Buy");
+              let message = `*${val[key].nsecode}*\nAt: ${Number(data[0].data[data[0].data.length-1].CH_TRADE_HIGH_PRICE+percent).toFixed(2)}\nStop loss At: ${Number(data[0].data[data[0].data.length-1].CH_TRADE_HIGH_PRICE-percent).toFixed(2)}`
+              if(message)
+                for (let i = 0; i < phoneNumber.length; i++) {
+                  getWhatsappData(`*Buy Now* \n\n\n` + message, phoneNumber[i])
+                }
+            }
+          })
       })
     })
-    }).catch(error => {
-  console.error('Unhandled promise rejection:', error);
-})
-}catch (error) {
-   console.log(error.response.data)
- }
-}
-cron.schedule('0 17 * * 1-5', () => {
-  getValueofDelivery();
-})
-
-
-
-const sendHoldingMyMessage =() =>{
-database.ref(`/stocksDeliveryHolding/`+"date"+String(moment().format("DDMMYYYY"))).orderByChild("DeliveryPercent").startAt(70).once('value').then((snapshot)=> {
-  var resultsArray = [];
-  snapshot.forEach(function(childSnapshot) {
-    var item = childSnapshot.val();
-    resultsArray.push(item);
-  });
-  let message =  resultsArray?.map(obj => `*${obj.symbol}*        Holding%: *${obj.DeliveryPercent}* \nCMP: *${obj.lastPrice}*     Holding5days% : *${obj.Delivery5AvgDaysPercent}* `).join('\n\n\n');
-   if(message)
-   for (let i = 0; i < phoneNumber.length; i++) {
-     getWhatsappData(`Today's Holding by Big Invester\n\n\n` + message, phoneNumber[i])
-   }
-})
-}
-cron.schedule('30 17 * * 1-5', () => {
-  sendHoldingMyMessage();
-})
-
-
-const Symbols =[
-  "ABB", "ACC",  "ADANIENSOL", "ADANIENT",  "ADANIGREEN",  "ADANIPORTS",  "ATGL",   "AWL",   "AMBUJACEM",   "APOLLOHOSP",  "ASIANPAINT",   "DMART",  "AXISBANK",  "BAJAJ-AUTO",   "BAJFINANCE", "BAJAJFINSV", "BAJAJHLDNG", "BANKBARODA", "BERGEPAINT", "BEL", "BPCL", "BHARTIARTL", "BOSCHLTD", "BRITANNIA", "CANBK", "CHOLAFIN", "CIPLA", "COALINDIA", "COLPAL", "DLF", "DABUR", "DIVISLAB", "DRREDDY", "EICHERMOT", "NYKAA","GAIL", "GODREJCP", "GRASIM", "HCLTECH", "HDFCAMC", "HDFCBANK", "HDFCLIFE", "HAVELLS", "HEROMOTOCO", "HINDALCO", "HAL", "HINDUNILVR", "ICICIBANK", "ICICIGI", "ICICIPRULI", "ITC", "IOC", "IRCTC", "INDUSTOWER", "INDUSINDBK", "NAUKRI", "INFY", "INDIGO", "JSWSTEEL", "JINDALSTEL", "KOTAKBANK", "LTIM", "LT", "LICI", "M&M","MARICO", "MARUTI", "MUTHOOTFIN", "NTPC", "NESTLEIND", "ONGC", "PIIND", "PAGEIND", "PIDILITIND", "POWERGRID", "PGHH", "RELIANCE", "SBICARD", "SBILIFE", "SRF", "MOTHERSON", "SHREECEM", "SIEMENS", "SBIN", "SUNPHARMA", "TCS", "TATACONSUM", "TATAMOTORS", "TATAPOWER", "TATASTEEL", "TECHM", "TITAN", "TORNTPHARM", "UPL", "ULTRACEMCO", "MCDOWELL-N", "VBL", "VEDL", "WIPRO", "ZOMATO",
-  "AUBANK", "ABBOTINDIA", "ABCAPITAL", "ALKEM", "ASHOKLEY", "ASTRAL", "AUROPHARMA", "BALKRISIND", "BANDHANBNK", "BATAINDIA", "BHARATFORG", "BIOCON", "COFORGE", "CONCOR", "CUMMINSIND", "ESCORTS", "FEDERALBNK", "GODREJPROP", "GUJGASLTD", "HINDPETRO", "HONAUT", "IDFCFIRSTB", "INDHOTEL", "JUBLFOOD", "LTTS", "LICHSGFIN","LUPIN", "MRF", "M&MFIN", "MFSL", "MPHASIS", "NMDC", "OBEROIRLTY", "OFSS", "PERSISTENT", "PETRONET", "POLYCAB", "PFC", "PNB", "RECLTD", "SHRIRAMFIN", "SAIL", "TVSMOTOR", "TATACOMM", "TRENT", "UBL", "IDEA", "VOLTAS", "ZEEL", "ZYDUSLIFE"
-]
-const getSecurityVolumeNSE = async(symbol, config) =>{
-  try{
-      await axios.get(`https://www.nseindia.com/api/historical/securityArchives?from=${moment().subtract(30, "days").format("DD-MM-YYYY")}&to=${moment().format("DD-MM-YYYY")}&symbol=${symbol}&dataType=priceVolumeDeliverable&series=ALL`, config).then(resp=>{
-        console.log("symbol-----",resp.data.data) 
-        database.ref(` stocksDeliveryHoldingNSE/`+symbol).set(resp.data.data);
-      }).catch(error => {
-        console.error('Unhandled promise rejection:', error);
-      })
-  }catch (error) {
-    console.log("======", error)
+  }catch(error){
+    console.log(error)
   }
-}
-
-const getValueFromNSE = async (symbol) =>{
-  try{
-    let configHeader = {
-      headers: {
-        // "Referer" : "https://www.nseindia.com/report-detail/eq_security",
-        // "User-Agent" : "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
-      }
+  }
+  const tommorrowCalled = () =>{
+    const range = {
+      start: new Date(),
+      end: new Date()
     }
-    console.log("test cookie")
-    await axios.get("https://www.nseindia.com/report-detail/eq_security", configHeader).then(async (response)=>{
-      console.log(response.headers['set-cookie'].join('; '))
-    if(symbol){
-     let config = {
-       headers: {
-         "Cookie": response.headers['set-cookie'].join('; '),
-         "User-Agent" : "Mozilla/5.0 (Linux; Android 10; Pixel 3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Mobile Safari/537.36",
-         "Referer" : "https://www.nseindia.com/report-detail/eq_security"
-       }
-     }
-          getSecurityVolumeNSE(symbol, config)
-
-    }else{
-      var i = 0;
-      (function loopIt(i) {
-        setTimeout(function(){
-          let config = {
-            headers: {
-              "Cookie": response.headers['set-cookie'].join('; '),
-              "User-Agent" : "Mozilla/5.0 (Linux; Android 10; Pixel 3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Mobile Safari/537.36"+i,
-              "Referer" : "https://www.nseindia.com/report-detail/eq_security"
-            }
+    database.ref(`/`).once('value').then((snapshot)=> {
+      let val = snapshot.val().stockinstack;
+      Object.keys(val).map(key => { 
+        nseIndia.getEquityHistoricalData(val[key].nsecode, range).then(data => {
+          let percent= 0.01 * data[0].data[data[0].data.length-1].CH_OPENING_PRICE;
+          let obj = {
+            symbol: val[key].nsecode,
+            buyAt: Number(data[0].data[data[0].data.length-1].CH_TRADE_HIGH_PRICE+percent).toFixed(2),
+            sellAt: Number(data[0].data[data[0].data.length-1].CH_TRADE_HIGH_PRICE-percent).toFixed(2),
+            entry: "pending",
+            ...data[0].data[data[0].data.length-1]
           }
-          getSecurityVolumeNSE(Symbols[i], config)
-            console.log(Symbols[i]);
-            if(i < Symbols.length - 1)  loopIt(i+1)
-          }, 10000);
-      })(i)
-      }
-    }).catch(error => {
-      console.log(error)
-      }) 
-  } catch (error) {
-      console.log(error)
-  }
-}
-app.get('/symbol/:itemId', (req, res) => {
-  res.send({symbol: req.params.itemId})
-  getValueFromNSE(req.params.itemId)
-})
 
-app.get('/symbols', (req, res) => {
-  res.send({symbol: req.params.itemId})
-  getValueFromNSE();
-})
-cron.schedule("30 17 * * 1-5", () => {
-  getValueFromNSE();
-})
-
-
-const getNSEDataFromDatabase = () =>{
-database.ref('/ stocksDeliveryHoldingNSE/')
-.once('value').then((snapshot)=> {
-  let message = `Today's Holding by Big Invester`;
-  for (let i = 0; i < phoneNumber.length; i++) {
-    getWhatsappData(message, phoneNumber[i])
-  }
-  snapshot.forEach((stockSnapshot) => {
-    const stockName = stockSnapshot.key;
-    const stockData = stockSnapshot.val();
-    if (stockData) {
-  
-      const stockEntries = Object.entries(stockData);
-      const totalDelivery = Object.keys(stockData).reduce((accumulator, vkey) => {
-        return accumulator + stockData[vkey].COP_DELIV_QTY;
-      }, 0);
-      const totalTradedQty = Object.keys(stockData).reduce((accumulator, vkey) => {
-        return accumulator + stockData[vkey].CH_TOT_TRADED_QTY;
-      }, 0);
-      let monthDelivery = Number(totalDelivery/totalTradedQty*100).toFixed(2);
-
-      const lastThreeElements = Object.keys(stockData).slice(-3);
-      const sumOfLastThreeDelivery = lastThreeElements.reduce((accumulator, vkey) => {
-        return accumulator + stockData[vkey].COP_DELIV_QTY;
-      }, 0);
-      const sumOfLastThreetotalTradedQty = lastThreeElements.reduce((accumulator, vkey) => {
-        return accumulator + stockData[vkey].CH_TOT_TRADED_QTY;
-      }, 0);
-      let monthDeliveryThreeLast = Number(sumOfLastThreeDelivery/sumOfLastThreetotalTradedQty*100).toFixed(2);
-
-      const lastThreeElements8 = Object.keys(stockData).slice(-8);
-      const sumOfLastThreeDelivery8 = lastThreeElements8.reduce((accumulator, vkey) => {
-        return accumulator + stockData[vkey].COP_DELIV_QTY;
-      }, 0);
-      const sumOfLastThreetotalTradedQty8 = lastThreeElements8.reduce((accumulator, vkey) => {
-        return accumulator + stockData[vkey].CH_TOT_TRADED_QTY;
-      }, 0);
-      let monthDeliveryThreeLast8 = Number(sumOfLastThreeDelivery8/sumOfLastThreetotalTradedQty8*100).toFixed(2);
-
-
-      const lastThreeElements15 = Object.keys(stockData).slice(-8);
-      const sumOfLastThreeDelivery15 = lastThreeElements15.reduce((accumulator, vkey) => {
-        return accumulator + stockData[vkey].COP_DELIV_QTY;
-      }, 0);
-      const sumOfLastThreetotalTradedQty15 = lastThreeElements15.reduce((accumulator, vkey) => {
-        return accumulator + stockData[vkey].CH_TOT_TRADED_QTY;
-      }, 0);
-      let monthDeliveryThreeLast15 = Number(sumOfLastThreeDelivery15/sumOfLastThreetotalTradedQty15*100).toFixed(2);
-   
-        for (const [key, data] of stockEntries) {
-        if (data.CH_TIMESTAMP === moment().format("YYYY-MM-DD") && data.COP_DELIV_PERC > 60) {
-          if(data.COP_DELIV_PERC >= stockData[key-1].COP_DELIV_PERC && data.CH_CLOSING_PRICE > data.CH_OPENING_PRICE){
-            if(monthDeliveryThreeLast>monthDeliveryThreeLast8 && data.CH_CLOSING_PRICE >  stockData[key-3].CH_OPENING_PRICE ){
-            // if(monthDeliveryThreeLast>monthDeliveryThreeLast8)
-            console.log(stockName, data.CH_CLOSING_PRICE, data.COP_DELIV_PERC, )
-            let dataMessage=`*${stockName}*        Holding%: *${data.COP_DELIV_PERC}* \nCMP: *${data.CH_CLOSING_PRICE}*     HoldingMonth% : *${monthDelivery}* \n\n\n https://in.tradingview.com/chart/?symbol=${stockName}`
-            // console.log(dataMessage)
+          let message = `*${val[key].nsecode}*\nBuy At: ${Number(data[0].data[data[0].data.length-1].CH_TRADE_HIGH_PRICE+percent).toFixed(2)}\nStop loss: ${Number(data[0].data[data[0].data.length-1].CH_TRADE_HIGH_PRICE-percent).toFixed(2)}\n  https://in.tradingview.com/chart/?symbol=${val[key].nsecode}`
+          database.ref(`/stockForBuy/`+val[key].nsecode).set(obj);
+          if(message)
             for (let i = 0; i < phoneNumber.length; i++) {
-              getWhatsappData(dataMessage, phoneNumber[i])
+              getWhatsappData(`Add in your WatchList \n\n\n` + message, phoneNumber[i])
             }
-            }
-          }
-        }
-      }
-    }
+        })
+      });
+    })
+  }
+  cron.schedule('30 21 * * 1-5', () => {
+    tommorrowCalled();
   })
-})
-}
-
-app.get('/nse', (req, res) => {
-getNSEDataFromDatabase();
-})
