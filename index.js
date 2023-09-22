@@ -222,7 +222,8 @@ database.ref(`/`).once('value').then((snapshot)=> {
       let val = snapshot.val().stockinstack;
       Object.keys(val).map(key => { 
         nseIndia.getEquityHistoricalData(val[key].nsecode, range).then(data => {
-          let percent= 0.01 * data[0].data[data[0].data.length-1].CH_OPENING_PRICE;
+          let percent= 0.002 * data[0].data[data[0].data.length-1].CH_OPENING_PRICE;
+          console.log(percent)
           let obj = {
             symbol: val[key].nsecode,
             buyAt: Number(data[0].data[data[0].data.length-1].CH_TRADE_HIGH_PRICE+percent).toFixed(2),
@@ -235,7 +236,7 @@ database.ref(`/`).once('value').then((snapshot)=> {
           database.ref(`/stockForBuy/`+val[key].nsecode).set(obj);
           if(message)
             for (let i = 0; i < phoneNumber.length; i++) {
-              getWhatsappData(`Add in your WatchList \n\n\n` + message, phoneNumber[i])
+              getWhatsappData(`For Next Trading Session \n\n` + message, phoneNumber[i])
             }
         })
       });
