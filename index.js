@@ -60,7 +60,7 @@ const schedule = '*/10 9-16 * * 1-5';
       })
     })
   }
-  cron.schedule('30 16 * * 1-5', getValue);
+  cron.schedule('30 17 * * 1-5', getValue);
 
 
   const getWhatsappData = async (message, phone) =>{
@@ -222,11 +222,12 @@ const sendMessage=(message)=>{
       Object.keys(val).map(key => { 
         nseIndia.getEquityHistoricalData(val[key].nsecode, range).then(data => {
           let percent= 0.005 * data[0].data[data[0].data.length-1]?.CH_TRADE_HIGH_PRICE;
-          console.log(percent)
+          let percentLow= 0.005 * data[0].data[data[0].data.length-1]?.CH_TRADE_LOW_PRICE;
+          console.log(data[0].data[data[0].data.length-1])
           let obj = {
             symbol: val[key].nsecode,
             buyAt: Number(data[0].data[data[0].data.length-1].CH_TRADE_HIGH_PRICE+percent).toFixed(2),
-            sellAt: Number(data[0].data[data[0].data.length-1].CH_TRADE_HIGH_PRICE-percent).toFixed(2),
+            sellAt: Number(data[0].data[data[0].data.length-1].CH_TRADE_LOW_PRICE-percentLow).toFixed(2),
             entry: "pending",
             ...data[0].data[data[0].data.length-1]
           }
@@ -242,4 +243,7 @@ const sendMessage=(message)=>{
   }
   cron.schedule('30 19 * * 1-5', () => {
     tommorrowCalled();
+  })
+  cron.schedule('30 20 * * 1-5', () => {
+    database.ref(`/stockinstack/`).remove();
   })
