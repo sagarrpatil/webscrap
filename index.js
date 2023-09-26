@@ -179,6 +179,12 @@ database.ref(`/`).once('value').then((snapshot)=> {
   });
 })
 })
+const sendMessage=(message)=>{
+            if(message)
+                for (let i = 0; i < phoneNumber.length; i++) {
+                  getWhatsappData(message, phoneNumber[i])
+                }
+}
   const moneycontrolLivePrice = async (obj) =>{
     try{
     await axios.get("https://www.moneycontrol.com/india/stockpricequote/personal-care/colgatepalmoliveindia/CPI").then(async (res)=>{
@@ -189,22 +195,15 @@ database.ref(`/`).once('value').then((snapshot)=> {
               database.ref(`/stockForBuy/`+obj.nsecode).remove();
               database.ref(`/stockinstack/`+obj.nsecode).remove();
             } 
-
             if(snapshot.val()?.sellAt >= response.data?.data[response.data.data.length-1].value && snapshot.val()?.entry === "Buy"){
+              let message = `*${obj.nsecode}* squareOff your position`;
+              sendMessage(`*Stoploss hit* \n\n\n` + message)
               database.ref(`/stockForBuy/`+obj.nsecode).remove();
               database.ref(`/stockinstack/`+obj.nsecode).remove();
-              let message = `*${val[key].nsecode}* squareOff your position`
-              if(message)
-                for (let i = 0; i < phoneNumber.length; i++) {
-                  getWhatsappData(`*Stoploss hit* \n\n\n` + message, phoneNumber[i])
-                }
             }else if(snapshot.val()?.buyAt <= response.data?.data[response.data.data.length-1].value && snapshot.val()?.entry !== "Buy"){
+              let message = `*${obj.nsecode}* \nCMP: ${response.data?.data[response.data.data.length-1].value}`
+              sendMessage(`*Buy Now* \n\n\n` + message)
               database.ref(`/stockForBuy/`+obj.nsecode+"/entry").set("Buy");
-              let message = `*${val[key].nsecode}*\nAt: ${Number(data[0].data[data[0].data.length-1].CH_TRADE_HIGH_PRICE+percent).toFixed(2)}\nStop loss At: ${Number(data[0].data[data[0].data.length-1].CH_TRADE_HIGH_PRICE-percent).toFixed(2)}`
-              if(message)
-                for (let i = 0; i < phoneNumber.length; i++) {
-                  getWhatsappData(`*Buy Now* \n\n\n` + message, phoneNumber[i])
-                }
             }
           })
       })
@@ -222,7 +221,7 @@ database.ref(`/`).once('value').then((snapshot)=> {
       let val = snapshot.val().stockinstack;
       Object.keys(val).map(key => { 
         nseIndia.getEquityHistoricalData(val[key].nsecode, range).then(data => {
-          let percent= 0.002 * data[0].data[data[0].data.length-1].CH_OPENING_PRICE;
+          let percent= 0.005 * data[0].data[data[0].data.length-1]?.CH_TRADE_HIGH_PRICE;
           console.log(percent)
           let obj = {
             symbol: val[key].nsecode,
@@ -231,9 +230,8 @@ database.ref(`/`).once('value').then((snapshot)=> {
             entry: "pending",
             ...data[0].data[data[0].data.length-1]
           }
-
-          let message = `*${val[key].nsecode}*\nBuy At: ${Number(data[0].data[data[0].data.length-1].CH_TRADE_HIGH_PRICE+percent).toFixed(2)}\nStop loss: ${Number(data[0].data[data[0].data.length-1].CH_TRADE_HIGH_PRICE-percent).toFixed(2)}\n  https://in.tradingview.com/chart/?symbol=${val[key].nsecode}`
           database.ref(`/stockForBuy/`+val[key].nsecode).set(obj);
+          let message = `*${val[key].nsecode}*\nBuy At: ${Number(data[0].data[data[0].data.length-1].CH_TRADE_HIGH_PRICE+percent).toFixed(2)}\nStop loss: ${Number(data[0].data[data[0].data.length-1].CH_TRADE_HIGH_PRICE-percent).toFixed(2)}\n  https://in.tradingview.com/chart/?symbol=${val[key].nsecode}`;
           if(message)
             for (let i = 0; i < phoneNumber.length; i++) {
               getWhatsappData(`For Next Trading Session \n\n` + message, phoneNumber[i])
@@ -242,6 +240,6 @@ database.ref(`/`).once('value').then((snapshot)=> {
       });
     })
   }
-  cron.schedule('30 21 * * 1-5', () => {
+  cron.schedule('30 19 * * 1-5', () => {
     tommorrowCalled();
   })
