@@ -169,44 +169,47 @@ cron.schedule('0 8 * * 1-5', () => {
 app.listen(process.env.PORT || PORT, () => {
     console.log('listening on *:' + PORT);
 });
-  
 
-cron.schedule('* 9-16 * * 1-5', () => {
-database.ref(`/`).once('value').then((snapshot)=> {
-  let val = snapshot.val().stockForBuy;
-  val && Object.keys(val).map(key => { 
-    moneycontrolLivePrice(key)
-  });
-})
-})
+ 
+
 const sendMessage=(message)=>{
-            if(message)
-                for (let i = 0; i < phoneNumber.length; i++) {
-                  getWhatsappData(message, phoneNumber[i])
-                }
+  if(message)
+      for (let i = 0; i < phoneNumber.length; i++) {
+        getWhatsappData(message, phoneNumber[i])
+      }
 }
-  const moneycontrolLivePrice = async (obj) =>{
+database.ref(`/`).on('value', async (snapshot) => {
+  var objSnap = snapshot.val();
+  // console.log(objSnap);
+    cron.schedule('* 9-16 * * 1-5', () => {
+      let val = objSnap.stockForBuy;
+      val && Object.keys(val).map(key => { 
+        moneycontrolLivePrice(key, val)
+      });
+    })
+
+})
+
+
+  const moneycontrolLivePrice = async (obj, stockForBuy) =>{
     try{
     await axios.get("https://www.moneycontrol.com/india/stockpricequote/personal-care/colgatepalmoliveindia/CPI").then(async (res)=>{
       await axios.get(`https://priceapi.moneycontrol.com/techCharts/intra?symbol=${obj}&resolution=1&from=${moment().subtract(1, 'days').unix()}&to=${moment().unix()}`).then(response=>{
-          console.log(obj, response.data?.data[response.data.data.length-1].value)
-          database.ref(`/stockForBuy/`+obj).once('value').then((snapshot)=> {
-            if(snapshot.val()?.sellAt >= response.data?.data[response.data.data.length-1].value && snapshot.val()?.entry === "pending"){
+            if(stockForBuy[obj]?.sellAt >= response.data?.data[response.data.data.length-1].value && stockForBuy[obj]?.entry === "pending"){
               database.ref(`/stockForBuy/`+obj).remove();
               database.ref(`/stockinstack/`+obj).remove();
             } 
-            if(snapshot.val()?.sellAt >= response.data?.data[response.data.data.length-1].value && snapshot.val()?.entry === "Buy"){
+            if(stockForBuy[obj]?.sellAt >= response.data?.data[response.data.data.length-1].value && stockForBuy[obj]?.entry === "Buy"){
               let message = `*${obj}* squareOff your position`;
               sendMessage(`*Stoploss hit* \n\n\n` + message)
               database.ref(`/stockForBuy/`+obj).remove();
               database.ref(`/stockinstack/`+obj).remove();
-            }else if(snapshot.val()?.buyAt <= response.data?.data[response.data.data.length-1].value && snapshot.val()?.entry !== "Buy"){
+            }else if(stockForBuy[obj]?.buyAt <= response.data?.data[response.data.data.length-1].value && stockForBuy[obj]?.entry !== "Buy"){
               let message = `*${obj}* \nCMP: ${response.data?.data[response.data.data.length-1].value}`
               sendMessage(`*Buy Now* \n\n\n` + message)
               database.ref(`/stockForBuy/`+obj+"/entry").set("Buy");
             }
           })
-      })
     })
   }catch(error){
     console.log(error)
