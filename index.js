@@ -15,14 +15,14 @@ app.use(cors({
 const PORT = 9000;
 const moment = require('moment');
 var firebaseConfig = {
-  apiKey: "AIzaSyDkoGMgvAmfDUW3h0LmYH8LbZrinsYEyAA",
-  authDomain: "studebok.firebaseapp.com",
-  databaseURL: "https://studebok-default-rtdb.firebaseio.com",
-  projectId: "studebok",
-  storageBucket: "studebok.appspot.com",
-  messagingSenderId: "613111157977",
-  appId: "1:613111157977:web:1e52da162477a390d65ac8",
-  measurementId: "G-NQYE95LQ5Z"
+  apiKey: "AIzaSyCqa-ayRJHj3rBPjD-fHfK1mXINmUNIbRI",
+  authDomain: "algotrading-dd3cc.firebaseapp.com",
+  databaseURL: "https://algotrading-dd3cc-default-rtdb.firebaseio.com",
+  projectId: "algotrading-dd3cc",
+  storageBucket: "algotrading-dd3cc.appspot.com",
+  messagingSenderId: "1096781555916",
+  appId: "1:1096781555916:web:73ac05660a6c3f37bd7a69",
+  measurementId: "G-3JFDPFGC8W"
 };
 firebase.initializeApp(firebaseConfig)
 let database = firebase.database()
