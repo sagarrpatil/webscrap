@@ -221,8 +221,8 @@ const sendMessage=(message)=>{
       let val = snapshot.val().stockinstack;
       val && Object.keys(val).map(key => { 
         nseIndia.getEquityHistoricalData(val[key].nsecode, range).then(data => {
-          let percent= 0.005 * data[0].data[data[0].data.length-1]?.CH_TRADE_HIGH_PRICE;
-          let percentLow= 0.005 * data[0].data[data[0].data.length-1]?.CH_TRADE_LOW_PRICE;
+          let percent= 0.002 * data[0].data[data[0].data.length-1]?.CH_TRADE_HIGH_PRICE;
+          let percentLow= 0.002 * data[0].data[data[0].data.length-1]?.CH_TRADE_LOW_PRICE;
           console.log(data[0].data[data[0].data.length-1])
           let obj = {
             symbol: val[key].nsecode,
