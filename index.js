@@ -174,7 +174,7 @@ app.listen(process.env.PORT || PORT, () => {
 cron.schedule('* 9-16 * * 1-5', () => {
 database.ref(`/`).once('value').then((snapshot)=> {
   let val = snapshot.val().stockinstack;
-  Object.keys(val).map(key => { 
+  val && Object.keys(val).map(key => { 
     moneycontrolLivePrice(val[key])
   });
 })
@@ -232,7 +232,7 @@ const sendMessage=(message)=>{
             ...data[0].data[data[0].data.length-1]
           }
           database.ref(`/stockForBuy/`+val[key].nsecode).set(obj);
-          let message = `*${val[key].nsecode}*\nBuy At: ${Number(data[0].data[data[0].data.length-1].CH_TRADE_HIGH_PRICE+percent).toFixed(2)}\nStop loss: ${Number(data[0].data[data[0].data.length-1].CH_TRADE_HIGH_PRICE-percent).toFixed(2)}\n  https://in.tradingview.com/chart/?symbol=${val[key].nsecode}`;
+          let message = `*${val[key].nsecode}*\nBuy At: ${Number(data[0].data[data[0].data.length-1].CH_TRADE_HIGH_PRICE+percent).toFixed(2)}\nStop loss: ${Number(data[0].data[data[0].data.length-1].CH_TRADE_LOW_PRICE-percentLow).toFixed(2)}\n  https://in.tradingview.com/chart/?symbol=${val[key].nsecode}`;
           if(message)
             for (let i = 0; i < phoneNumber.length; i++) {
               getWhatsappData(`For Next Trading Session \n\n` + message, phoneNumber[i])
