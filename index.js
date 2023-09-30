@@ -313,7 +313,7 @@ database.ref(`/`).on('value', async (snapshot) => {
                 { sumofCallChangeOI: 0, sumofPutChangeOI: 0 }
               );
               
-              let date = "s"+ String(moment().format("MMMDDYYYY"));
+              let date = "s"+ String(moment().format("MMMDDYYYYhhmm"));
               let changeInPCR= Number(sumofPutChangeOI / sumofCallChangeOI).toFixed(2);
               
               let data = {
@@ -324,7 +324,8 @@ database.ref(`/`).on('value', async (snapshot) => {
                 currentChain: JSON.parse(jsonString)
               };
               
-              database.ref(`/niftyChangeOI/${date}`).set(data);
+              database.ref(`/niftyChangeOI/`).set(data);
+              database.ref(`/pcrtime/`+date).set({changeInPCR:changeInPCR});
               console.log(data)
           })
         })
