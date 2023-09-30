@@ -250,3 +250,86 @@ database.ref(`/`).on('value', async (snapshot) => {
   cron.schedule('30 20 * * 1-5', () => {
     database.ref(`/stockinstack/`).remove();
   })
+
+
+  cron.schedule('* 9-16 * * 1-5', () => {
+    try{
+      axios.get("https://www.moneycontrol.com/mc/widget/indicesdetails/spot?classic=true&ind_id=9").then(res=>{
+        let $ = cheerio.load(res.data);
+        let currentValue = $('#sp_val');
+        axios.get(`https://www.moneycontrol.com/mc/widget/indice_overview/stickey_menu?classic=true&sec=options&optiontype=CE&strikeprice=${currentValue}&ind_id=9`).then(response=>{
+          let $1 = cheerio.load(response.data);
+          let expDate = $1('#op_exp_stick').text().replace("|", "").replace("Expiry","").replace(" ","");
+          let exp = moment(expDate, "MMM DD, YYYY").format("YYYY-MM-DD");
+          axios.get(`https://www.moneycontrol.com/indices/fno/view-option-chain/NIFTY/${exp}`).then(resOptionchain=>{
+            let $2 = cheerio.load(resOptionchain.data);
+
+            const jsonData = [];
+            const customKeys = [
+              'callOI',
+              'callChangeOI',
+              'callVolume',
+              'callChangeLTP',
+              'callLTP',
+              'strike',
+              'putLTP',
+              'putChangeLTP',
+              'putVolume',
+              'putChangeOI',
+              'putOI',
+            ];
+            $2('tbody tr').each((_, row) => {
+              const columns = $2(row).find('td');
+              const rowData = {};
+              columns.each((index, column) => {
+                const columnName = $2('thead th').eq(index).text().trim();
+                const cellValue = $2(column).text().trim();
+                rowData[customKeys[index]] = cellValue;
+              });
+              jsonData.push(rowData);
+            });
+              const jsonString = JSON.stringify(jsonData, null, 2);
+    
+
+              const { sumofCallChangeOI, sumofPutChangeOI } = JSON.parse(jsonString).reduce(
+                (acc, val) => {
+                  const callValChangeOI = Number(val.callChangeOI?.replace(/,/g, '')) || 0;
+                  const putValChangeOI = Number(val.putChangeOI?.replace(/,/g, '')) || 0;
+              
+                  if (callValChangeOI > 0) {
+                    acc.sumofCallChangeOI += callValChangeOI;
+                  } else {
+                    acc.sumofPutChangeOI += -callValChangeOI;
+                  }
+              
+                  if (putValChangeOI > 0) {
+                    acc.sumofPutChangeOI += putValChangeOI;
+                  } else {
+                    acc.sumofCallChangeOI += -putValChangeOI;
+                  }
+              
+                  return acc;
+                },
+                { sumofCallChangeOI: 0, sumofPutChangeOI: 0 }
+              );
+              
+              let date = "s"+ String(moment().format("MMMDDYYYY"));
+              let changeInPCR= Number(sumofPutChangeOI / sumofCallChangeOI).toFixed(2);
+              
+              let data = {
+                sumofCallChangeOI: sumofCallChangeOI,
+                sumofPutChangeOI: sumofPutChangeOI,
+                currentValue: currentValue.text(),
+                changeInPCR:changeInPCR,
+                currentChain: JSON.parse(jsonString)
+              };
+              
+              database.ref(`/niftyChangeOI/${date}`).set(data);
+              console.log(data)
+          })
+        })
+      })
+    }catch (error){
+      console.log(error)
+    }
+  })
