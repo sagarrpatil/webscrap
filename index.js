@@ -20,7 +20,7 @@ const headers = {
   'Cache-Control': 'max-age=0',
 };
 const proxyMiddleware = createProxyMiddleware({
-  target: 'http://13.49.226.28:9000', 
+  target: 'http://13.49.220.28:9000', 
   changeOrigin: true, 
 });
 app.use('/', proxyMiddleware);
