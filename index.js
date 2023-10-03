@@ -354,11 +354,11 @@ database.ref(`/`).on('value', async (snapshot) => {
       changeInPCR: changeInPCR,
       currentChain: jsonData,
     };
-
+    console.log(data);
     if (sumofCallChangeOI) {
       database.ref(`/niftyChangeOI/`).set(data);
       database.ref(`/pcrtime/`+date).set({changeInPCR:changeInPCR});
-      // console.log(data);
+  
     }
   
     await browser.close();
