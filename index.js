@@ -267,7 +267,7 @@ database.ref(`/`).on('value', async (snapshot) => {
     const currentDate = moment();
     const daysUntilThursday = (4 - currentDate.day() + 7) % 7;
     const nextThursday = currentDate.add(daysUntilThursday, 'days');
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({ headless: 'new',} );
     const page = await browser.newPage();
     let exp = nextThursday.format("YYYY-MM-DD");
     const url = `https://www.moneycontrol.com/indices/fno/view-option-chain/NIFTY/${exp}`;
@@ -288,7 +288,7 @@ database.ref(`/`).on('value', async (snapshot) => {
     await page.setExtraHTTPHeaders(headers); // Optional
   
     await page.goto(url, { waitUntil: 'networkidle0' });
-  
+    console.log(page)
     // Extract the data using Puppeteer
     const jsonData = await page.evaluate(() => {
       const customKeys = [
@@ -358,7 +358,7 @@ database.ref(`/`).on('value', async (snapshot) => {
     if (sumofCallChangeOI) {
       database.ref(`/niftyChangeOI/`).set(data);
       database.ref(`/pcrtime/`+date).set({changeInPCR:changeInPCR});
-      console.log(data);
+      // console.log(data);
     }
   
     await browser.close();
