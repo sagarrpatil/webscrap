@@ -184,7 +184,7 @@ database.ref(`/`).on('value', async (snapshot) => {
     cron.schedule('* 9-16 * * 1-5', () => {
       let val = objSnap.stockForBuy;
       val && Object.keys(val).map(key => { 
-        moneycontrolLivePrice(key, val)
+        // moneycontrolLivePrice(key, val)
       });
     })
 
