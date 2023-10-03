@@ -252,8 +252,8 @@ database.ref(`/`).on('value', async (snapshot) => {
   })
 
 
-  cron.schedule('* 9-16 * * 1-5', () => {
-    setInterval(async ()=>{
+  cron.schedule('* 9-16 * * 1-5',async () => {
+    // setInterval(async ()=>{
     try{
      await axios.get("https://www.moneycontrol.com/mc/widget/indicesdetails/spot?classic=true&ind_id=9").then(async (res)=>{
         let $ = cheerio.load(res.data);
@@ -337,6 +337,6 @@ database.ref(`/`).on('value', async (snapshot) => {
     }catch (error){
       console.log(error)
     }
-  }, 5000);  
+  // }, 5000);  
   })
   //
