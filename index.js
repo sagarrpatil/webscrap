@@ -281,7 +281,7 @@ database.ref(`/`).on('value', async (snapshot) => {
               let currentValue= res.data.indices.lastprice
               let exp = nextThursday.format("YYYY-MM-DD");
               await axios.get(`https://www.moneycontrol.com/indices/fno/view-option-chain/NIFTY/${exp}`, { headers }).then(resOptionchain=>{
-                console.log(resOptionchain)
+                console.log(resOptionchain.data)
                 let $2 = cheerio.load(resOptionchain.data);
                 const jsonData = [];
                 const customKeys = [
