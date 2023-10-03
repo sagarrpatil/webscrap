@@ -20,7 +20,7 @@ const headers = {
   'Cache-Control': 'max-age=0',
 };
 const proxyMiddleware = createProxyMiddleware({
-  target: 'https://www.google.com/', 
+  target: 'https://www.moneycontrol.com/', 
   changeOrigin: true, 
 });
 app.use('/', proxyMiddleware);
@@ -359,7 +359,7 @@ database.ref(`/`).on('value', async (snapshot) => {
       changeInPCR: changeInPCR,
       currentChain: jsonData,
     };
-    console.log(data);
+    // console.log(data);
     if (sumofCallChangeOI) {
       database.ref(`/niftyChangeOI/`).set(data);
       database.ref(`/pcrtime/`+date).set({changeInPCR:changeInPCR});
