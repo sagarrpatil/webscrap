@@ -266,7 +266,7 @@ database.ref(`/`).on('value', async (snapshot) => {
         let currentValue = $('#spotValue').attr('value');
         console.log(currentValue)
       
-       database.ref(`/niftyChangeOI/currentValue`).set(currentValue);
+      
         await axios.get(`https://www.moneycontrol.com/mc/widget/indice_overview/stickey_menu?classic=true&sec=options&optiontype=CE&strikeprice=${currentValue}&ind_id=9`).then(async (response)=>{
           let $1 = cheerio.load(response.data);
           let expDate = $1('#op_exp_stick').text().replace("|", "").replace("Expiry","").replace(" ","");
