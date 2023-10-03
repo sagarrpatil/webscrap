@@ -8,7 +8,7 @@ const cheerio = require('cheerio');
 const cron = require('node-cron');
 const { NseIndia } = require("stock-nse-india");
 const puppeteer = require('puppeteer');
-
+const { createProxyMiddleware } = require('http-proxy-middleware');
 const  nseIndia = new  NseIndia();
 const headers = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36',
@@ -19,6 +19,11 @@ const headers = {
   'Upgrade-Insecure-Requests': '1',
   'Cache-Control': 'max-age=0',
 };
+const proxyMiddleware = createProxyMiddleware({
+  target: 'http://13.49.226.28:9000', 
+  changeOrigin: true, 
+});
+app.use('/', proxyMiddleware);
 const { SNSClient, PublishCommand } = require("@aws-sdk/client-sns");
 app.use(cors({
   origin: '*'
