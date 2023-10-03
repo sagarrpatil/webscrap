@@ -205,9 +205,9 @@ database.ref(`/`).on('value', async (snapshot) => {
               database.ref(`/stockForBuy/`+obj).remove();
               database.ref(`/stockinstack/`+obj).remove();
             }else if(stockForBuy[obj]?.buyAt <= response.data?.data[response.data.data.length-1].value && stockForBuy[obj]?.entry !== "Buy"){
+              database.ref(`/stockForBuy/`+obj+"/entry").set("Buy");
               let message = `*${obj}* \nCMP: ${response.data?.data[response.data.data.length-1].value}`
               sendMessage(`*Buy Now* \n\n\n` + message)
-              database.ref(`/stockForBuy/`+obj+"/entry").set("Buy");
             }
           })
     })
@@ -253,16 +253,19 @@ database.ref(`/`).on('value', async (snapshot) => {
 
 
   cron.schedule('* 9-16 * * 1-5', () => {
-    setInterval(()=>{
+    setInterval(async ()=>{
     try{
-      axios.get("https://www.moneycontrol.com/mc/widget/indicesdetails/spot?classic=true&ind_id=9").then(res=>{
+     await axios.get("https://www.moneycontrol.com/mc/widget/indicesdetails/spot?classic=true&ind_id=9").then(async (res)=>{
         let $ = cheerio.load(res.data);
         let currentValue = $('#sp_val');
-        axios.get(`https://www.moneycontrol.com/mc/widget/indice_overview/stickey_menu?classic=true&sec=options&optiontype=CE&strikeprice=${currentValue}&ind_id=9`).then(response=>{
+
+      
+       database.ref(`/niftyChangeOI/currentValue`).set(currentValue.text());
+        await axios.get(`https://www.moneycontrol.com/mc/widget/indice_overview/stickey_menu?classic=true&sec=options&optiontype=CE&strikeprice=${currentValue}&ind_id=9`).then(async (response)=>{
           let $1 = cheerio.load(response.data);
           let expDate = $1('#op_exp_stick').text().replace("|", "").replace("Expiry","").replace(" ","");
           let exp = moment(expDate, "MMM DD, YYYY").format("YYYY-MM-DD");
-          axios.get(`https://www.moneycontrol.com/indices/fno/view-option-chain/NIFTY/${exp}`).then(resOptionchain=>{
+          await axios.get(`https://www.moneycontrol.com/indices/fno/view-option-chain/NIFTY/${exp}`).then(resOptionchain=>{
             let $2 = cheerio.load(resOptionchain.data);
 
             const jsonData = [];
@@ -334,5 +337,5 @@ database.ref(`/`).on('value', async (snapshot) => {
     }catch (error){
       console.log(error)
     }
-  }, 2000);  
+  }, 5000);  
   })
