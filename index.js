@@ -256,7 +256,11 @@ database.ref(`/`).on('value', async (snapshot) => {
     // setInterval(async ()=>{
       console.log("start")
     try{
-     await axios.get("https://www.moneycontrol.com/mc/widget/indicesdetails/spot?classic=true&ind_id=9").then(async (res)=>{
+     await axios.get("https://www.moneycontrol.com/mc/widget/indicesdetails/spot?classic=true&ind_id=9", {
+      headers:{
+        "User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
+      }
+     }).then(async (res)=>{
         let $ = cheerio.load(res.data);
         let currentValue = $('#sp_val');
         console.log(res.data)
