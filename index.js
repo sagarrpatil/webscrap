@@ -8,6 +8,15 @@ const cheerio = require('cheerio');
 const cron = require('node-cron');
 const { NseIndia } = require("stock-nse-india");
 const  nseIndia = new  NseIndia();
+const headers = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36',
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+  'Accept-Language': 'en-US,en;q=0.9',
+  'Accept-Encoding': 'gzip, deflate, br',
+  'Connection': 'keep-alive',
+  'Upgrade-Insecure-Requests': '1',
+  'Cache-Control': 'max-age=0',
+};
 const { SNSClient, PublishCommand } = require("@aws-sdk/client-sns");
 app.use(cors({
   origin: '*'
@@ -256,6 +265,9 @@ database.ref(`/`).on('value', async (snapshot) => {
   
    
   const getNiftyValue= async () =>{ 
+    const currentDate = moment();
+    const daysUntilThursday = (4 - currentDate.day() + 7) % 7;
+    const nextThursday = currentDate.add(daysUntilThursday, 'days');
     try{
       await axios.get("https://www.moneycontrol.com/indian-indices/nifty-50-9.html", {
       headers:{
@@ -267,16 +279,9 @@ database.ref(`/`).on('value', async (snapshot) => {
             await axios.get("https://appfeeds.moneycontrol.com/jsonapi/market/indices&format=json&t_device=iphone&t_app=MC&t_version=48&ind_id=9").then(async (res)=>{
               console.log(res.data.indices.lastprice)
               let currentValue= res.data.indices.lastprice
-          
-            await axios.get(`https://www.moneycontrol.com/mc/widget/indice_overview/stickey_menu?classic=true&sec=options&optiontype=CE&strikeprice=${currentValue}&ind_id=9`).then(async (response)=>{
-              let $1 = cheerio.load(response.data);
-              let expDate = $1('#op_exp_stick').text().replace("|", "").replace("Expiry","").replace(" ","");
-              let exp = moment(expDate, "MMM DD, YYYY").format("YYYY-MM-DD");
-
-              console.log("=====",response.data)
-              await axios.get(`https://www.moneycontrol.com/indices/fno/view-option-chain/NIFTY/${exp}`).then(resOptionchain=>{
+              let exp = nextThursday.format("YYYY-MM-DD");
+              await axios.get(`https://www.moneycontrol.com/indices/fno/view-option-chain/NIFTY/${exp}`, { headers }).then(resOptionchain=>{
                 let $2 = cheerio.load(resOptionchain.data);
-
                 const jsonData = [];
                 const customKeys = [
                   'callOI',
@@ -302,8 +307,6 @@ database.ref(`/`).on('value', async (snapshot) => {
                   jsonData.push(rowData);
                 });
                   const jsonString = JSON.stringify(jsonData, null, 2);
-        
-
                   const { sumofCallChangeOI, sumofPutChangeOI } = JSON.parse(jsonString).reduce(
                     (acc, val) => {
                       const callValChangeOI = Number(val.callChangeOI?.replace(/,/g, '')) || 0;
@@ -341,8 +344,6 @@ database.ref(`/`).on('value', async (snapshot) => {
                   database.ref(`/pcrtime/`+date).set({changeInPCR:changeInPCR});
                   console.log(data)}
               })
-            })
-      
         })
    
       })
@@ -350,7 +351,7 @@ database.ref(`/`).on('value', async (snapshot) => {
       console.log(error)
     }
   }
-  cron.schedule('* 9-16 * * 1-5', () => {
+  // cron.schedule('* 9-16 * * 1-5', () => {
     getNiftyValue();
     setInterval(async ()=>{
       await axios.get("https://appfeeds.moneycontrol.com/jsonapi/market/indices&format=json&t_device=iphone&t_app=MC&t_version=48&ind_id=9").then(async (res)=>{
@@ -359,4 +360,4 @@ database.ref(`/`).on('value', async (snapshot) => {
         database.ref(`/niftyChangeOI/currentValue`).set(currentValue);
       })  
     }, 10000)
-  })
+  // })
