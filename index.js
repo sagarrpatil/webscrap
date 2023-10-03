@@ -272,6 +272,8 @@ database.ref(`/`).on('value', async (snapshot) => {
               let $1 = cheerio.load(response.data);
               let expDate = $1('#op_exp_stick').text().replace("|", "").replace("Expiry","").replace(" ","");
               let exp = moment(expDate, "MMM DD, YYYY").format("YYYY-MM-DD");
+
+              console.log("=====",response.data)
               await axios.get(`https://www.moneycontrol.com/indices/fno/view-option-chain/NIFTY/${exp}`).then(resOptionchain=>{
                 let $2 = cheerio.load(resOptionchain.data);
 
