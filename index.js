@@ -252,20 +252,21 @@ database.ref(`/`).on('value', async (snapshot) => {
   })
 
 
+
   cron.schedule('* 9-16 * * 1-5',async () => {
     // setInterval(async ()=>{
       console.log("start")
     try{
-     await axios.get("https://www.moneycontrol.com/mc/widget/indicesdetails/spot?classic=true&ind_id=9", {
+     await axios.get("https://www.moneycontrol.com/indian-indices/nifty-50-9.html", {
       headers:{
         "User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
       }
      }).then(async (res)=>{
         let $ = cheerio.load(res.data);
-        let currentValue = $('#sp_val');
-        console.log(res.data)
+        let currentValue = $('#spotValue').attr('value');
+        console.log(currentValue)
       
-       database.ref(`/niftyChangeOI/currentValue`).set(currentValue.text());
+       database.ref(`/niftyChangeOI/currentValue`).set(currentValue);
         await axios.get(`https://www.moneycontrol.com/mc/widget/indice_overview/stickey_menu?classic=true&sec=options&optiontype=CE&strikeprice=${currentValue}&ind_id=9`).then(async (response)=>{
           let $1 = cheerio.load(response.data);
           let expDate = $1('#op_exp_stick').text().replace("|", "").replace("Expiry","").replace(" ","");
@@ -328,7 +329,7 @@ database.ref(`/`).on('value', async (snapshot) => {
               let data = {
                 sumofCallChangeOI: sumofCallChangeOI,
                 sumofPutChangeOI: sumofPutChangeOI,
-                currentValue: currentValue.text(),
+                currentValue: currentValue,
                 changeInPCR:changeInPCR,
                 currentChain: JSON.parse(jsonString)
               };
