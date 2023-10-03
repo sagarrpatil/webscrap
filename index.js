@@ -259,7 +259,7 @@ database.ref(`/`).on('value', async (snapshot) => {
      await axios.get("https://www.moneycontrol.com/mc/widget/indicesdetails/spot?classic=true&ind_id=9").then(async (res)=>{
         let $ = cheerio.load(res.data);
         let currentValue = $('#sp_val');
-        console.log(res.data)
+        console.log(currentValue)
       
        database.ref(`/niftyChangeOI/currentValue`).set(currentValue.text());
         await axios.get(`https://www.moneycontrol.com/mc/widget/indice_overview/stickey_menu?classic=true&sec=options&optiontype=CE&strikeprice=${currentValue}&ind_id=9`).then(async (response)=>{
