@@ -264,7 +264,7 @@ database.ref(`/`).on('value', async (snapshot) => {
      }).then(async (res)=>{
         let $ = cheerio.load(res.data);
         let currentValue = $('#spotValue').attr('value');
-        console.log(currentValue)
+        console.log(res.data, currentValue)
       
       
         await axios.get(`https://www.moneycontrol.com/mc/widget/indice_overview/stickey_menu?classic=true&sec=options&optiontype=CE&strikeprice=${currentValue}&ind_id=9`).then(async (response)=>{
