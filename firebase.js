@@ -15,3 +15,4 @@ var firebaseConfig = {
   export  {
     storage, firebase as default
   }
+  
