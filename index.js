@@ -372,4 +372,12 @@ database.ref(`/`).on('value', async (snapshot) => {
   }
  cron.schedule('* 9-16 * * 1-5', () => {
     getNiftyValue();
+
+    setInterval(async ()=>{
+      await axios.get("https://appfeeds.moneycontrol.com/jsonapi/market/indices&format=json&t_device=iphone&t_app=MC&t_version=48&ind_id=9").then(async (res)=>{
+        let currentValue= res.data.indices.lastprice;
+        console.log(currentValue)
+        database.ref(`/niftyChangeOI/currentValue`).set(currentValue);
+      })  
+    }, 6000)
   })
