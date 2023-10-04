@@ -379,5 +379,5 @@ database.ref(`/`).on('value', async (snapshot) => {
         console.log(currentValue)
         database.ref(`/niftyChangeOI/currentValue`).set(currentValue);
       })  
-    }, 6000)
+    }, 10000)
   })
