@@ -380,7 +380,7 @@ database.ref(`/`).on('value', async (snapshot) => {
         database.ref(`/niftyChangeOI/currentValue`).set(currentValue);
       })  
     }, 10000)
-  })
+
 
 
 
@@ -436,3 +436,4 @@ database.ref(`/`).on('value', async (snapshot) => {
   
     })
   }, 6000);
+})
