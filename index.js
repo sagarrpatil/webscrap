@@ -20,7 +20,7 @@ const headers = {
   'Cache-Control': 'max-age=0',
 };
 const proxyMiddleware = createProxyMiddleware({
-  target: 'https://www.moneycontrol.com/', 
+  target: 'https://groww.in/', 
   changeOrigin: true, 
 });
 app.use('/', proxyMiddleware);
@@ -268,134 +268,108 @@ database.ref(`/`).on('value', async (snapshot) => {
   })
 
 
-  const valuebrowser = async (currentValue) => {
+
+  
+   
+ 
+
+  const getNiftyValue= async () =>{ 
+    try{
+  setInterval(async ()=>{
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
     const currentDate = moment();
     const daysUntilThursday = (4 - currentDate.day() + 7) % 7;
     const nextThursday = currentDate.add(daysUntilThursday, 'days');
-    const browser = await puppeteer.launch({ headless: 'new',} );
-    const page = await browser.newPage();
     let exp = nextThursday.format("YYYY-MM-DD");
-    const url = `https://www.moneycontrol.com/indices/fno/view-option-chain/NIFTY/${exp}`;
-    const headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-      'Accept-Language': 'en-US,en;q=0.9',
-      'Accept-Encoding': 'gzip, deflate, br',
-      'Connection': 'keep-alive',
-      'Upgrade-Insecure-Requests': '1',
-      'Cache-Control': 'max-age=0',
-    };
+    const page = await browser.newPage();
+    const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.0.0 Safari/537.36';
+    await page.setUserAgent(userAgent);
+    await page.goto('https://groww.in/options/nifty?expiry='+exp);
+    await page.waitForTimeout(10000);
   
-    // Set custom user agent if necessary
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36'); // Optional
   
-    // Set custom headers
-    await page.setExtraHTTPHeaders(headers); // Optional
   
-    await page.goto(url, { waitUntil: 'networkidle0' });
-    console.log(page)
-    // Extract the data using Puppeteer
-    const jsonData = await page.evaluate(() => {
-      const customKeys = [
-        'callOI',
-        'callChangeOI',
-        'callVolume',
-        'callChangeLTP',
-        'callLTP',
-        'strike',
-        'putLTP',
-        'putChangeLTP',
-        'putVolume',
-        'putChangeOI',
-        'putOI',
-      ];
-  
-      const rows = Array.from(document.querySelectorAll('tbody tr'));
-  
-      return rows.map((row) => {
-        const columns = Array.from(row.querySelectorAll('td'));
-        const rowData = {};
-  
-        columns.forEach((column, index) => {
-          const columnName = document.querySelectorAll('thead th')[index].textContent.trim();
-          const cellValue = column.textContent.trim();
-          rowData[customKeys[index]] = cellValue;
+   axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry="+exp).then(async(response)=>{
+    let currentValue=await axios.get("https://appfeeds.moneycontrol.com/jsonapi/market/indices&format=json&t_device=iphone&t_app=MC&t_version=48&ind_id=9").then(async (res)=>{
+    return res.data.indices.lastprice
+    })  
+    const call = [];
+    const put = [];
+    
+    const expiryDates = response.data.expiryDetailsDto.expiryDates;
+    const optionChainRequests = expiryDates.map(exp => {
+      return axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry=" + exp)
+        .then(response1 => {
+      
+          const callOptionIds = response1.data.optionChains.map(item => item.callOption?.growwContractId);
+          const putOptionIds = response1.data.optionChains.map(item => item.putOption?.growwContractId);
+          call.push(...callOptionIds);
+          put.push(...putOptionIds);
         });
-  
-        return rowData;
-      });
     });
-  
-    // Calculate sumofCallChangeOI and sumofPutChangeOI
-    const { sumofCallChangeOI, sumofPutChangeOI } = jsonData.reduce(
-      (acc, val) => {
-        const callValChangeOI = Number(val.callChangeOI?.replace(/,/g, '')) || 0;
-        const putValChangeOI = Number(val.putChangeOI?.replace(/,/g, '')) || 0;
-  
-        if (callValChangeOI > 0) {
-          acc.sumofCallChangeOI += callValChangeOI;
-        } else {
-          acc.sumofPutChangeOI += -callValChangeOI;
+    Promise.all(optionChainRequests)
+    .then(() => {
+    
+       axios.post("https://groww.in/v1/api/stocks_fo_data/v1/tr_live_prices/exchange/NSE/segment/FNO/latest_prices_batch", call).then(res=>{
+       let {sumofCallChangeOI, sumofPutChangeOI} = Object.values(res.data).reduce((accumulator, current) => {
+          let callValChangeOI = parseFloat(current.oiDayChange) || 0;
+
+          if (callValChangeOI > 0) {
+            accumulator.sumofCallChangeOI += callValChangeOI;
+          } else {
+            accumulator.sumofPutChangeOI += -callValChangeOI;
+          }
+          return accumulator;
+        },
+        { sumofCallChangeOI: 0, sumofPutChangeOI: 0 });
+        
+     
+
+      axios.post("https://groww.in/v1/api/stocks_fo_data/v1/tr_live_prices/exchange/NSE/segment/FNO/latest_prices_batch", put).then(res=>{
+        let {sumofCallChangeOIPE, sumofPutChangeOIPE} = Object.values(res.data).reduce((accumulator, current) => {
+          let callValChangeOI = parseFloat(current.oiDayChange) || 0;
+
+          if (callValChangeOI > 0) {
+            accumulator.sumofPutChangeOIPE += callValChangeOI;
+          } else {
+            accumulator.sumofCallChangeOIPE += -callValChangeOI;
+          }
+          return accumulator;
+        },
+        { sumofCallChangeOIPE: 0, sumofPutChangeOIPE: 0 });
+
+
+
+        console.log(  );
+        let ceCall=sumofCallChangeOI+ sumofCallChangeOIPE;
+        let pePut=sumofPutChangeOI+ sumofPutChangeOIPE;
+        const data = {
+          sumofCallChangeOI: ceCall,
+          sumofPutChangeOI: pePut,
+          currentValue: currentValue, // Replace with the actual value
+          changeInPCR: Number((pePut)/(ceCall)).toFixed(2),
+        };
+       
+        if (sumofCallChangeOI) {
+          console.log(data);
+          database.ref(`/niftyChangeOI/`).set(data);
         }
-  
-        if (putValChangeOI > 0) {
-          acc.sumofPutChangeOI += putValChangeOI;
-        } else {
-          acc.sumofCallChangeOI += -putValChangeOI;
-        }
-  
-        return acc;
-      },
-      { sumofCallChangeOI: 0, sumofPutChangeOI: 0 }
-    );
-  
-    const date = `s${String(moment().format('MMMDDYYYYhhmm'))}`;
-    const changeInPCR = Number(sumofPutChangeOI / sumofCallChangeOI).toFixed(2);
-  
-    const data = {
-      sumofCallChangeOI: sumofCallChangeOI,
-      sumofPutChangeOI: sumofPutChangeOI,
-      currentValue: currentValue, // Replace with the actual value
-      changeInPCR: changeInPCR,
-      currentChain: jsonData,
-    };
-    console.log(data);
-    if (sumofCallChangeOI) {
-      database.ref(`/niftyChangeOI/`).set(data);
-      database.ref(`/pcrtime/`+date).set({changeInPCR:changeInPCR});
-  
-    }
-  
-    await browser.close();
-};
-  
-   
-  const getNiftyValue= async () =>{ 
-  
-    try{
-      await axios.get("https://www.moneycontrol.com/indian-indices/nifty-50-9.html", {
-      headers:{
-        "User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"
-      }
-     }).then(async (res)=>{
-            await axios.get("https://appfeeds.moneycontrol.com/jsonapi/market/indices&format=json&t_device=iphone&t_app=MC&t_version=48&ind_id=9").then(async (res)=>{
-              console.log(res.data.indices.lastprice)
-              let currentValue= res.data.indices.lastprice
-              valuebrowser(currentValue);
-        })
-   
       })
+      })
+    })
+    .catch(error => {
+      console.error("Error:", error);
+    });
+  })
+  await browser.close();
+}, 20000);
     }catch (error){
-      console.log(error)
+
     }
   }
-  cron.schedule('* 9-16 * * 1-5', () => {
+ cron.schedule('* 9-16 * * 1-5', () => {
     getNiftyValue();
-    setInterval(async ()=>{
-      await axios.get("https://appfeeds.moneycontrol.com/jsonapi/market/indices&format=json&t_device=iphone&t_app=MC&t_version=48&ind_id=9").then(async (res)=>{
-        let currentValue= res.data.indices.lastprice;
-        console.log(currentValue)
-        database.ref(`/niftyChangeOI/currentValue`).set(currentValue);
-      })  
-    }, 10000)
   })
