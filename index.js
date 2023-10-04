@@ -437,3 +437,6 @@ database.ref(`/`).on('value', async (snapshot) => {
     })
   }, 6000);
 })
+
+
+console.log("testing")
