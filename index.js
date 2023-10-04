@@ -381,3 +381,57 @@ database.ref(`/`).on('value', async (snapshot) => {
       })  
     }, 10000)
   })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  setInterval(async ()=>{
+
+    const currentDate = moment();
+    const daysUntilThursday = (4 - currentDate.day() + 7) % 7;
+    const nextThursday = currentDate.add(daysUntilThursday, 'days');
+    let exp = nextThursday.format("YYYY-MM-DD");
+     axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry="+exp).then(response=>{
+    const { totalBuyQtyCE, totalSellQtyCE, totalBuyQtyPE,  totalSellQtyPE } = response.data.optionChains.reduce(
+      (acc, val) => {
+        const totalBuyQtyCE = Number(val.callOption.totalBuyQty) || 0;
+        const totalSellQtyCE = Number(val.callOption.totalSellQty) || 0;
+        const totalBuyQtyPE = Number(val.putOption.totalBuyQty) || 0;
+        const totalSellQtyPE = Number(val.putOption.totalSellQty) || 0;
+          acc.totalBuyQtyCE += totalBuyQtyCE;
+          acc.totalSellQtyCE += totalSellQtyCE;
+       
+  
+          acc.totalBuyQtyPE += totalBuyQtyPE;
+          acc.totalSellQtyPE += totalSellQtyPE;
+  
+  
+          
+        return acc;
+      },
+      { totalBuyQtyCE: 0, totalSellQtyCE: 0, totalBuyQtyPE:0, totalSellQtyPE:0 }
+    );
+      let buyers = totalSellQtyPE + totalBuyQtyCE;
+      let sellers = totalBuyQtyPE + totalSellQtyCE;
+        console.log(Number(buyers/sellers).toFixed(2) )
+  
+    })
+  }, 6000);
