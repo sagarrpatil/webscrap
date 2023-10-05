@@ -292,7 +292,7 @@ database.ref(`/`).on('value', async (snapshot) => {
   
   
   
-   axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry="+exp).then(async(response)=>{
+   await axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry="+exp).then(async(response)=>{
     let currentValue=await axios.get("https://appfeeds.moneycontrol.com/jsonapi/market/indices&format=json&t_device=iphone&t_app=MC&t_version=48&ind_id=9").then(async (res)=>{
     return res.data.indices.lastprice
     })  
@@ -300,8 +300,8 @@ database.ref(`/`).on('value', async (snapshot) => {
     const put = [];
     
     const expiryDates = response.data.expiryDetailsDto.expiryDates;
-    const optionChainRequests = expiryDates.map(exp => {
-      return axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry=" + exp)
+    const optionChainRequests = expiryDates.map(async (exp) => {
+       return await axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry=" + exp)
         .then(response1 => {
       
           const callOptionIds = response1.data.optionChains.map(item => item.callOption?.growwContractId);
@@ -311,9 +311,9 @@ database.ref(`/`).on('value', async (snapshot) => {
         });
     });
     Promise.all(optionChainRequests)
-    .then(() => {
+    .then(async () => {
     
-       axios.post("https://groww.in/v1/api/stocks_fo_data/v1/tr_live_prices/exchange/NSE/segment/FNO/latest_prices_batch", call).then(res=>{
+       await axios.post("https://groww.in/v1/api/stocks_fo_data/v1/tr_live_prices/exchange/NSE/segment/FNO/latest_prices_batch", call).then(async (res)=>{
        let {sumofCallChangeOI, sumofPutChangeOI} = Object.values(res.data).reduce((accumulator, current) => {
           let callValChangeOI = parseFloat(current.oiDayChange) || 0;
 
@@ -328,7 +328,7 @@ database.ref(`/`).on('value', async (snapshot) => {
         
      
 
-      axios.post("https://groww.in/v1/api/stocks_fo_data/v1/tr_live_prices/exchange/NSE/segment/FNO/latest_prices_batch", put).then(res=>{
+      await axios.post("https://groww.in/v1/api/stocks_fo_data/v1/tr_live_prices/exchange/NSE/segment/FNO/latest_prices_batch", put).then(res=>{
         let {sumofCallChangeOIPE, sumofPutChangeOIPE} = Object.values(res.data).reduce((accumulator, current) => {
           let callValChangeOI = parseFloat(current.oiDayChange) || 0;
 
@@ -379,7 +379,7 @@ database.ref(`/`).on('value', async (snapshot) => {
         console.log(currentValue)
         database.ref(`/niftyChangeOI/currentValue`).set(currentValue);
       })  
-    }, 10000)
+    }, 6000)
 
 
 
@@ -409,7 +409,7 @@ database.ref(`/`).on('value', async (snapshot) => {
     const daysUntilThursday = (4 - currentDate.day() + 7) % 7;
     const nextThursday = currentDate.add(daysUntilThursday, 'days');
     let exp = nextThursday.format("YYYY-MM-DD");
-     axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry="+exp).then(response=>{
+    await axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry="+exp).then(response=>{
     const { totalBuyQtyCE, totalSellQtyCE, totalBuyQtyPE,  totalSellQtyPE } = response.data.optionChains.reduce(
       (acc, val) => {
         const totalBuyQtyCE = Number(val.callOption.totalBuyQty) || 0;
@@ -435,7 +435,7 @@ database.ref(`/`).on('value', async (snapshot) => {
         database.ref(`/valueBuy/`).set(Number(buyers/sellers).toFixed(2));
   
     })
-  }, 6000);
+  }, 10000);
 })
 
 
