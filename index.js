@@ -11,6 +11,7 @@ const puppeteer = require('puppeteer');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const  nseIndia = new  NseIndia();
 const headers = {
+  headers: {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36',
   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
   'Accept-Language': 'en-US,en;q=0.9',
@@ -18,6 +19,7 @@ const headers = {
   'Connection': 'keep-alive',
   'Upgrade-Insecure-Requests': '1',
   'Cache-Control': 'max-age=0',
+  }
 };
 const proxyMiddleware = createProxyMiddleware({
   target: 'https://groww.in/', 
@@ -292,8 +294,8 @@ database.ref(`/`).on('value', async (snapshot) => {
   
   
   
-   await axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry="+exp).then(async(response)=>{
-    let currentValue=await axios.get("https://appfeeds.moneycontrol.com/jsonapi/market/indices&format=json&t_device=iphone&t_app=MC&t_version=48&ind_id=9").then(async (res)=>{
+   await axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry="+exp, headers).then(async(response)=>{
+    let currentValue=await axios.get("https://appfeeds.moneycontrol.com/jsonapi/market/indices&format=json&t_device=iphone&t_app=MC&t_version=48&ind_id=9", headers).then(async (res)=>{
     return res.data.indices.lastprice
     })  
     const call = [];
@@ -301,7 +303,7 @@ database.ref(`/`).on('value', async (snapshot) => {
     
     const expiryDates = response.data.expiryDetailsDto.expiryDates;
     const optionChainRequests = expiryDates.map(async (exp) => {
-       return await axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry=" + exp)
+       return await axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry=" + exp, headers)
         .then(response1 => {
       
           const callOptionIds = response1.data.optionChains.map(item => item.callOption?.growwContractId);
@@ -313,7 +315,7 @@ database.ref(`/`).on('value', async (snapshot) => {
     Promise.all(optionChainRequests)
     .then(async () => {
     
-       await axios.post("https://groww.in/v1/api/stocks_fo_data/v1/tr_live_prices/exchange/NSE/segment/FNO/latest_prices_batch", call).then(async (res)=>{
+       await axios.post("https://groww.in/v1/api/stocks_fo_data/v1/tr_live_prices/exchange/NSE/segment/FNO/latest_prices_batch", call, headers).then(async (res)=>{
        let {sumofCallChangeOI, sumofPutChangeOI} = Object.values(res.data).reduce((accumulator, current) => {
           let callValChangeOI = parseFloat(current.oiDayChange) || 0;
 
@@ -328,7 +330,7 @@ database.ref(`/`).on('value', async (snapshot) => {
         
      
 
-      await axios.post("https://groww.in/v1/api/stocks_fo_data/v1/tr_live_prices/exchange/NSE/segment/FNO/latest_prices_batch", put).then(res=>{
+      await axios.post("https://groww.in/v1/api/stocks_fo_data/v1/tr_live_prices/exchange/NSE/segment/FNO/latest_prices_batch", put, headers).then(res=>{
         let {sumofCallChangeOIPE, sumofPutChangeOIPE} = Object.values(res.data).reduce((accumulator, current) => {
           let callValChangeOI = parseFloat(current.oiDayChange) || 0;
 
@@ -367,14 +369,14 @@ database.ref(`/`).on('value', async (snapshot) => {
   await browser.close();
 }, 20000);
     }catch (error){
-
+      console.log(error)
     }
   }
- cron.schedule('* 9-16 * * 1-5', () => {
+ cron.schedule('* 9-16 * * 1-5', async () => {
     getNiftyValue();
 
     setInterval(async ()=>{
-      await axios.get("https://appfeeds.moneycontrol.com/jsonapi/market/indices&format=json&t_device=iphone&t_app=MC&t_version=48&ind_id=9").then(async (res)=>{
+      await axios.get("https://appfeeds.moneycontrol.com/jsonapi/market/indices&format=json&t_device=iphone&t_app=MC&t_version=48&ind_id=9", headers).then(async (res)=>{
         let currentValue= res.data.indices.lastprice;
         console.log(currentValue)
         database.ref(`/niftyChangeOI/currentValue`).set(currentValue);
