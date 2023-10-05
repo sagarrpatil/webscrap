@@ -384,34 +384,13 @@ database.ref(`/`).on('value', async (snapshot) => {
     }, 6000)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
   setInterval(async ()=>{
 
     const currentDate = moment();
     const daysUntilThursday = (4 - currentDate.day() + 7) % 7;
     const nextThursday = currentDate.add(daysUntilThursday, 'days');
     let exp = nextThursday.format("YYYY-MM-DD");
-    await axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry="+exp).then(response=>{
+    await axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry="+exp, headers).then(response=>{
     const { totalBuyQtyCE, totalSellQtyCE, totalBuyQtyPE,  totalSellQtyPE } = response.data.optionChains.reduce(
       (acc, val) => {
         const totalBuyQtyCE = Number(val.callOption.totalBuyQty) || 0;
