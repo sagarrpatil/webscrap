@@ -12,8 +12,8 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 const  nseIndia = new  NseIndia();
 const headers = {
   headers: {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36',
-  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
+  'Accept': 'application/json, text/plain, */*',
   'Accept-Language': 'en-US,en;q=0.9',
   'Accept-Encoding': 'gzip, deflate, br',
   'Connection': 'keep-alive',
@@ -295,14 +295,12 @@ database.ref(`/`).on('value', async (snapshot) => {
   
   
    await axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry="+exp, headers).then(async(response)=>{
-    let currentValue=await axios.get("https://appfeeds.moneycontrol.com/jsonapi/market/indices&format=json&t_device=iphone&t_app=MC&t_version=48&ind_id=9", headers).then(async (res)=>{
-    return res.data.indices.lastprice
-    })  
+    let currentValue= "..."
     const call = [];
     const put = [];
     
-    const expiryDates = response.data.expiryDetailsDto.expiryDates;
-    const optionChainRequests = expiryDates.map(async (exp) => {
+    const expiryDates = response?.data?.expiryDetailsDto?.expiryDates;
+    const optionChainRequests =expiryDates && expiryDates.map(async (exp) => {
        return await axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry=" + exp, headers)
         .then(response1 => {
       
@@ -374,7 +372,7 @@ database.ref(`/`).on('value', async (snapshot) => {
   }
  cron.schedule('* 9-16 * * 1-5', async () => {
     getNiftyValue();
-
+    try{
     setInterval(async ()=>{
       await axios.get("https://appfeeds.moneycontrol.com/jsonapi/market/indices&format=json&t_device=iphone&t_app=MC&t_version=48&ind_id=9", headers).then(async (res)=>{
         let currentValue= res.data.indices.lastprice;
@@ -382,16 +380,18 @@ database.ref(`/`).on('value', async (snapshot) => {
         database.ref(`/niftyChangeOI/currentValue`).set(currentValue);
       })  
     }, 6000)
-
-
+    }catch (error){
+      console.log(error)
+    }
+    try{
   setInterval(async ()=>{
 
     const currentDate = moment();
     const daysUntilThursday = (4 - currentDate.day() + 7) % 7;
     const nextThursday = currentDate.add(daysUntilThursday, 'days');
     let exp = nextThursday.format("YYYY-MM-DD");
-    await axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry="+exp, headers).then(response=>{
-    const { totalBuyQtyCE, totalSellQtyCE, totalBuyQtyPE,  totalSellQtyPE } = response.data.optionChains.reduce(
+    await axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry="+exp).then(response=>{
+    const { totalBuyQtyCE, totalSellQtyCE, totalBuyQtyPE,  totalSellQtyPE } = response?.data?.optionChains?.reduce(
       (acc, val) => {
         const totalBuyQtyCE = Number(val.callOption.totalBuyQty) || 0;
         const totalSellQtyCE = Number(val.callOption.totalSellQty) || 0;
@@ -417,6 +417,9 @@ database.ref(`/`).on('value', async (snapshot) => {
   
     })
   }, 10000);
+}catch (error){
+  console.log(error)
+}
 })
 
 
