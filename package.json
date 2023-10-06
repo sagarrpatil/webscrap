@@ -25,6 +25,7 @@
     "nodemon": "^2.0.16",
     "puppeteer": "^21.3.6",
     "socket.io": "^4.5.1",
-    "stock-nse-india": "^1.1.3"
+    "stock-nse-india": "^1.1.3",
+    "zlib": "^1.0.5"
   }
 }

@@ -8,7 +8,8 @@ const cheerio = require('cheerio');
 const cron = require('node-cron');
 const { NseIndia } = require("stock-nse-india");
 const puppeteer = require('puppeteer');
-const { createProxyMiddleware } = require('http-proxy-middleware');
+const zlib = require('zlib');
+// const { createProxyMiddleware } = require('http-proxy-middleware');
 const  nseIndia = new  NseIndia();
 const headers = {
   headers: {
@@ -19,13 +20,21 @@ const headers = {
   'Connection': 'keep-alive',
   'Upgrade-Insecure-Requests': '1',
   'Cache-Control': 'max-age=0',
+  "X-Request-Id":"a6650b43-3f21-4950-aac3-b9b94f22d70c",
+  "X-App-Id":"growwWeb",
+  "X-Device-Id":"17e3ccfd-b899-5641-8457-5363712155be",
+  "X-Device-Type":"desktop",
+  "X-Platform":"web",
+  "Origin":"https://groww.in",
+  "Referer":"https://groww.in/options/nifty?expiry=2023-10-12",
+  "X-Request-Checksum":"Y3F1bmEjIyNLemxteHpublo3R0dVOUF6SzEzQ3FVRFJhanRGWVZ3Y3V6NHVxLzIrcER0cnpaRE5HazlOa3Nwa0IrbllHU3RSbE8rbkh5ZkhYaW8rK0lveWxsb3NucVR1UENlYmlLbHlzR25LOFk3VnovQT0="
   }
 };
-const proxyMiddleware = createProxyMiddleware({
-  target: 'https://groww.in/', 
-  changeOrigin: true, 
-});
-app.use('/', proxyMiddleware);
+// const proxyMiddleware = createProxyMiddleware({
+//   target: 'https://groww.in/', 
+//   changeOrigin: true, 
+// });
+// app.use('/', proxyMiddleware);
 const { SNSClient, PublishCommand } = require("@aws-sdk/client-sns");
 app.use(cors({
   origin: '*'
@@ -270,157 +279,132 @@ database.ref(`/`).on('value', async (snapshot) => {
   })
 
 
-
-  
-   
- 
-
-  const getNiftyValue= async () =>{ 
-    try{
-  setInterval(async ()=>{
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
+  var expiryDate = null;
+  const call = [];
+  const put = [];
+  async function fetchOptionChainData() {
     const currentDate = moment();
     const daysUntilThursday = (4 - currentDate.day() + 7) % 7;
     const nextThursday = currentDate.add(daysUntilThursday, 'days');
-    let exp = nextThursday.format("YYYY-MM-DD");
-    const page = await browser.newPage();
-    const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.0.0 Safari/537.36';
-    await page.setUserAgent(userAgent);
-    await page.goto('https://groww.in/options/nifty?expiry='+exp);
-    await page.waitForTimeout(10000);
+    const exp = nextThursday.format("YYYY-MM-DD");
   
+    try {
+      const response = await axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry=" + exp);
+      expiryDate = response.data.expiryDetailsDto.expiryDates;
+      const callOptionIds = response.data.optionChains.map(item => item.callOption?.growwContractId);
+      const putOptionIds = response.data.optionChains.map(item => item.putOption?.growwContractId);
+      call.push(...callOptionIds);
+      put.push(...putOptionIds);
+      const { totalBuyQtyCE, totalSellQtyCE, totalBuyQtyPE, totalSellQtyPE } = calculateOptionChainData(response.data.optionChains);
   
+      const buyers = totalSellQtyPE + totalBuyQtyCE;
+      const sellers = totalBuyQtyPE + totalSellQtyCE;
   
-   await axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry="+exp, headers).then(async(response)=>{
-    let currentValue= "..."
-    const call = [];
-    const put = [];
-    
-    const expiryDates = response?.data?.expiryDetailsDto?.expiryDates;
-    const optionChainRequests =expiryDates && expiryDates.map(async (exp) => {
-       return await axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry=" + exp, headers)
-        .then(response1 => {
-      
-          const callOptionIds = response1.data.optionChains.map(item => item.callOption?.growwContractId);
-          const putOptionIds = response1.data.optionChains.map(item => item.putOption?.growwContractId);
-          call.push(...callOptionIds);
-          put.push(...putOptionIds);
-        });
-    });
-    Promise.all(optionChainRequests)
-    .then(async () => {
-    
-       await axios.post("https://groww.in/v1/api/stocks_fo_data/v1/tr_live_prices/exchange/NSE/segment/FNO/latest_prices_batch", call, headers).then(async (res)=>{
-       let {sumofCallChangeOI, sumofPutChangeOI} = Object.values(res.data).reduce((accumulator, current) => {
-          let callValChangeOI = parseFloat(current.oiDayChange) || 0;
-
-          if (callValChangeOI > 0) {
-            accumulator.sumofCallChangeOI += callValChangeOI;
-          } else {
-            accumulator.sumofPutChangeOI += -callValChangeOI;
-          }
-          return accumulator;
-        },
-        { sumofCallChangeOI: 0, sumofPutChangeOI: 0 });
-        
-     
-
-      await axios.post("https://groww.in/v1/api/stocks_fo_data/v1/tr_live_prices/exchange/NSE/segment/FNO/latest_prices_batch", put, headers).then(res=>{
-        let {sumofCallChangeOIPE, sumofPutChangeOIPE} = Object.values(res.data).reduce((accumulator, current) => {
-          let callValChangeOI = parseFloat(current.oiDayChange) || 0;
-
-          if (callValChangeOI > 0) {
-            accumulator.sumofPutChangeOIPE += callValChangeOI;
-          } else {
-            accumulator.sumofCallChangeOIPE += -callValChangeOI;
-          }
-          return accumulator;
-        },
-        { sumofCallChangeOIPE: 0, sumofPutChangeOIPE: 0 });
-
-
-
-        console.log(  );
-        let ceCall=sumofCallChangeOI+ sumofCallChangeOIPE;
-        let pePut=sumofPutChangeOI+ sumofPutChangeOIPE;
-        const data = {
-          sumofCallChangeOI: ceCall,
-          sumofPutChangeOI: pePut,
-          currentValue: currentValue, // Replace with the actual value
-          changeInPCR: Number((pePut)/(ceCall)).toFixed(2),
-        };
-       
-        if (sumofCallChangeOI) {
-          console.log(data);
-          database.ref(`/niftyChangeOI/`).set(data);
-        }
-      })
-      })
-    })
-    .catch(error => {
-      console.error("Error:", error);
-    });
-  })
-  await browser.close();
-}, 20000);
-    }catch (error){
-      console.log(error)
+      console.log(Number(buyers / sellers).toFixed(2));
+      database.ref(`/valueBuy/`).set(Number(buyers / sellers).toFixed(2));
+    } catch (error) {
+      console.log(error);
     }
   }
- cron.schedule('* 9-16 * * 1-5', async () => {
-    getNiftyValue();
-    setInterval(async ()=>{
-    try{
-      await axios.get("https://appfeeds.moneycontrol.com/jsonapi/market/indices&format=json&t_device=iphone&t_app=MC&t_version=48&ind_id=9", headers).then(async (res)=>{
-        let currentValue= res.data.indices.lastprice;
-        console.log(currentValue)
-        database.ref(`/niftyChangeOI/currentValue`).set(currentValue);
-      })  
-    }catch (error){
-      console.log(error)
+  async function scrapeGrowwData() {
+    try {
+      const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
+  
+      const currentDate = moment();
+      const daysUntilThursday = (4 - currentDate.day() + 7) % 7;
+      const nextThursday = currentDate.add(daysUntilThursday, 'days');
+      const exp = nextThursday.format("YYYY-MM-DD");
+      console.log(exp)
+      const page = await browser.newPage();
+      const userAgent =
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.0.0 Safari/537.36';
+      await page.setUserAgent(userAgent);
+      await page.goto('https://groww.in/options/nifty?expiry=' + exp, { timeout: 60000 });
+      await page.waitForTimeout(10000);
+  
+      const currentValue = "..."; 
+    
+  
+  
+      const callResponse = await axios.post("https://groww.in/v1/api/stocks_fo_data/v1/tr_live_prices/exchange/NSE/segment/FNO/latest_prices_batch", call, headers);
+      const putResponse = await axios.post("https://groww.in/v1/api/stocks_fo_data/v1/tr_live_prices/exchange/NSE/segment/FNO/latest_prices_batch", put, headers);
+      const { sumofCallChangeOI, sumofPutChangeOI } = calculateChangeOI(callResponse.data);
+      const { sumofCallChangeOIPE, sumofPutChangeOIPE } = calculateChangeOI(putResponse.data);
+  
+      const ceCall = sumofCallChangeOI + sumofCallChangeOIPE;
+      const pePut = sumofPutChangeOI + sumofPutChangeOIPE;
+  
+      const data = {
+        sumofCallChangeOI: ceCall,
+        sumofPutChangeOI: pePut,
+        currentValue: currentValue,
+        changeInPCR: Number(pePut / ceCall).toFixed(2),
+      };
+console.log(callResponse)
+      if (sumofCallChangeOI) {
+        console.log(data);
+        database.ref(`/niftyChangeOI/`).set(data);
+      }
+  
+      await browser.close();
+    } catch (error) {
+      console.error("Error:", error);
     }
-  }, 6000)
-    try{
-  setInterval(async ()=>{
+  }
+  
+  function calculateChangeOI(data) {
+    return Object.values(data).reduce((accumulator, current) => {
+      const callValChangeOI = parseFloat(current.oiDayChange) || 0;
+  
+      if (callValChangeOI > 0) {
+        accumulator.sumofCallChangeOI += callValChangeOI;
+      } else {
+        accumulator.sumofPutChangeOI += -callValChangeOI;
+      }
+  
+      return accumulator;
+    }, { sumofCallChangeOI: 0, sumofPutChangeOI: 0 });
+  }
+  
+  async function fetchMoneyControlData() {
+    try {
+      const res = await axios.get("https://appfeeds.moneycontrol.com/jsonapi/market/indices&format=json&t_device=iphone&t_app=MC&t_version=48&ind_id=9", headers);
+      const currentValue = res.data.indices.lastprice;
+      console.log(currentValue);
+      database.ref(`/niftyChangeOI/currentValue`).set(currentValue);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  
 
-    const currentDate = moment();
-    const daysUntilThursday = (4 - currentDate.day() + 7) % 7;
-    const nextThursday = currentDate.add(daysUntilThursday, 'days');
-    let exp = nextThursday.format("YYYY-MM-DD");
-    await axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry="+exp).then(response=>{
-    const { totalBuyQtyCE, totalSellQtyCE, totalBuyQtyPE,  totalSellQtyPE } = response?.data?.optionChains?.reduce(
-      (acc, val) => {
-        const totalBuyQtyCE = Number(val.callOption.totalBuyQty) || 0;
-        const totalSellQtyCE = Number(val.callOption.totalSellQty) || 0;
-        const totalBuyQtyPE = Number(val.putOption.totalBuyQty) || 0;
-        const totalSellQtyPE = Number(val.putOption.totalSellQty) || 0;
-          acc.totalBuyQtyCE += totalBuyQtyCE;
-          acc.totalSellQtyCE += totalSellQtyCE;
-       
   
-          acc.totalBuyQtyPE += totalBuyQtyPE;
-          acc.totalSellQtyPE += totalSellQtyPE;
+  function calculateOptionChainData(optionChains) {
+    return optionChains.reduce((acc, val) => {
+      const totalBuyQtyCE = Number(val.callOption.totalBuyQty) || 0;
+      const totalSellQtyCE = Number(val.callOption.totalSellQty) || 0;
+      const totalBuyQtyPE = Number(val.putOption.totalBuyQty) || 0;
+      const totalSellQtyPE = Number(val.putOption.totalSellQty) || 0;
   
+      acc.totalBuyQtyCE += totalBuyQtyCE;
+      acc.totalSellQtyCE += totalSellQtyCE;
+      acc.totalBuyQtyPE += totalBuyQtyPE;
+      acc.totalSellQtyPE += totalSellQtyPE;
   
-          
-        return acc;
-      },
-      { totalBuyQtyCE: 0, totalSellQtyCE: 0, totalBuyQtyPE:0, totalSellQtyPE:0 }
-    );
-      let buyers = totalSellQtyPE + totalBuyQtyCE;
-      let sellers = totalBuyQtyPE + totalSellQtyCE;
-        console.log(Number(buyers/sellers).toFixed(2) )
-        database.ref(`/valueBuy/`).set(Number(buyers/sellers).toFixed(2));
+      return acc;
+    }, { totalBuyQtyCE: 0, totalSellQtyCE: 0, totalBuyQtyPE: 0, totalSellQtyPE: 0 });
+  }
   
-    })
-  }, 10000);
-}catch (error){
-  console.log(error)
-}
-})
-
-
-console.log("testing")
+  console.log("Starting script...");
+  
+  // Schedule tasks
+  cron.schedule('* 9-16 * * 1-5', async () => {
+    await scrapeGrowwData();
+  });
+  
+  setInterval(fetchMoneyControlData, 6000);
+  setInterval(fetchOptionChainData, 10000);
+  
