@@ -301,6 +301,7 @@ database.ref(`/`).on('value', async (snapshot) => {
       const sellers = totalBuyQtyPE + totalSellQtyCE;
   
       console.log(Number(buyers / sellers).toFixed(2));
+      database.ref(`/valueBuyDepth/`).set({buyers, sellers})
       database.ref(`/valueBuy/`).set(Number(buyers / sellers).toFixed(2));
     } catch (error) {
       console.log(error);
