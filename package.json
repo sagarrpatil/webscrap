@@ -19,7 +19,6 @@
     "firebase": "^8.10.0",
     "form-data": "^4.0.0",
     "http": "^0.0.1-security",
-    "http-proxy-middleware": "^2.0.6",
     "moment": "^2.29.3",
     "node-cron": "^3.0.2",
     "nodemon": "^2.0.16",
