@@ -291,10 +291,12 @@ database.ref(`/`).on('value', async (snapshot) => {
     try {
       const response = await axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry=" + exp);
       expiryDate = response.data.expiryDetailsDto.expiryDates;
+      
       const callOptionIds = response.data.optionChains.map(item => item.callOption?.growwContractId);
       const putOptionIds = response.data.optionChains.map(item => item.putOption?.growwContractId);
       call.push(...callOptionIds);
       put.push(...putOptionIds);
+
       const { totalBuyQtyCE, totalSellQtyCE, totalBuyQtyPE, totalSellQtyPE } = calculateOptionChainData(response.data.optionChains);
   
       const buyers = totalSellQtyPE + totalBuyQtyCE;
@@ -469,7 +471,7 @@ database.ref(`/`).on('value', async (snapshot) => {
   
   // Schedule tasks
   cron.schedule('* 9-16 * * 1-5', async () => {
-    await fetchOptionChainData();
+    // await fetchOptionChainData();
     setInterval(fetchMoneyControlData, 6000);
     setInterval(fetchOptionChainData, 10000);
   });
