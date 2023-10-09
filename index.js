@@ -299,7 +299,47 @@ database.ref(`/`).on('value', async (snapshot) => {
   
       const buyers = totalSellQtyPE + totalBuyQtyCE;
       const sellers = totalBuyQtyPE + totalSellQtyCE;
-  
+      const promises = [];
+
+      // expiryDate.forEach((val) => {
+      //   promises.push(
+      //     axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry=" + val)
+      //       .then((resp) => {
+      //         let callOptionIds = resp.data.optionChains.map(item => item.callOption?.growwContractId);
+      //         let putOptionIds = resp.data.optionChains.map(item => item.putOption?.growwContractId);
+      //         call.push(...callOptionIds);
+      //         put.push(...putOptionIds);
+      //       })
+      //   );
+      // });
+      // await Promise.all(promises);
+      // console.log(call, put)
+      const growoi = await axios.post("https://groww.in/v1/api/stocks_fo_data/v1/tr_live_prices/exchange/NSE/segment/FNO/latest_prices_batch", [...call, ...put]);
+      let OIGroww = growoi.data;
+      // console.log(OIGroww)
+      const { puts, calls } = Object.keys(OIGroww).reduce((accumulator, val) => {
+        let number = Number(OIGroww[val].oiDayChange);
+        if (val.includes("CE")) {
+          if (number > 0) {
+            accumulator.calls += number;
+          } else {
+            accumulator.puts += -number;
+          }
+        } else {
+          if (number > 0) {
+            accumulator.puts += number;
+          } else {
+            accumulator.calls += -number;
+          }
+        }
+        return accumulator;
+      }, { puts: 0, calls: 0 });
+
+
+        database.ref(`/niftyChangeOI/sumofCallChangeOI`).set(calls*50);
+        database.ref(`/niftyChangeOI/sumofPutChangeOI`).set(puts*50);
+        database.ref(`/niftyChangeOI/changeInPCR`).set(Number(puts/calls).toFixed(2));
+        console.log(Number(puts/calls).toFixed(2))
       console.log(Number(buyers / sellers).toFixed(2));
       database.ref(`/valueBuyDepth/`).set({buyers, sellers})
       database.ref(`/valueBuy/`).set(Number(buyers / sellers).toFixed(2));
@@ -307,90 +347,93 @@ database.ref(`/`).on('value', async (snapshot) => {
       console.log(error);
     }
   }
-  const valuebrowser = async () => {
-    const currentDate = moment();
-    const daysUntilThursday = (4 - currentDate.day() + 7) % 7;
-    const nextThursday = currentDate.add(daysUntilThursday, 'days');
-    const browser = await puppeteer.launch({ headless: 'new',} );
-    const page = await browser.newPage();
-    let exp = nextThursday.format("YYYY-MM-DD");
-    const url = `https://www.moneycontrol.com/indices/fno/view-option-chain/NIFTY/${exp}`;
-    const headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-      'Accept-Language': 'en-US,en;q=0.9',
-      'Accept-Encoding': 'gzip, deflate, br',
-      'Connection': 'keep-alive',
-      'Upgrade-Insecure-Requests': '1',
-      'Cache-Control': 'max-age=0',
-    };
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36'); // Optional
+  fetchOptionChainData();
+  
+  // const valuebrowser = async () => {
+  //   const currentDate = moment();
+  //   const daysUntilThursday = (4 - currentDate.day() + 7) % 7;
+  //   const nextThursday = currentDate.add(daysUntilThursday, 'days');
+  //   const browser = await puppeteer.launch({ headless: 'new',} );
+  //   const page = await browser.newPage();
+  //   let exp = nextThursday.format("YYYY-MM-DD");
+  //   const url = `https://www.moneycontrol.com/indices/fno/view-option-chain/NIFTY/${exp}`;
+  //   const headers = {
+  //     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36',
+  //     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+  //     'Accept-Language': 'en-US,en;q=0.9',
+  //     'Accept-Encoding': 'gzip, deflate, br',
+  //     'Connection': 'keep-alive',
+  //     'Upgrade-Insecure-Requests': '1',
+  //     'Cache-Control': 'max-age=0',
+  //   };
+  //   await page.setCacheEnabled(false);
+  //   await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36'); // Optional
 
-    // Set custom headers
-    await page.setExtraHTTPHeaders(headers); // Optional
+  //   // Set custom headers
+  //   await page.setExtraHTTPHeaders(headers); // Optional
 
-    await page.goto(url, { waitUntil: 'networkidle0' });
-    console.log(page)
-    // Extract the data using Puppeteer
-    const jsonData = await page.evaluate(() => {
-      const customKeys = [
-        'callOI',
-        'callChangeOI',
-        'callVolume',
-        'callChangeLTP',
-        'callLTP',
-        'strike',
-        'putLTP',
-        'putChangeLTP',
-        'putVolume',
-        'putChangeOI',
-        'putOI',
-      ];
-      const rows = Array.from(document.querySelectorAll('tbody tr'));
+  //   await page.goto(url, { waitUntil: 'networkidle0' });
+  //   console.log(page)
+  //   // Extract the data using Puppeteer
+  //   const jsonData = await page.evaluate(() => {
+  //     const customKeys = [
+  //       'callOI',
+  //       'callChangeOI',
+  //       'callVolume',
+  //       'callChangeLTP',
+  //       'callLTP',
+  //       'strike',
+  //       'putLTP',
+  //       'putChangeLTP',
+  //       'putVolume',
+  //       'putChangeOI',
+  //       'putOI',
+  //     ];
+  //     const rows = Array.from(document.querySelectorAll('tbody tr'));
 
-      return rows.map((row) => {
-        const columns = Array.from(row.querySelectorAll('td'));
-        const rowData = {};
+  //     return rows.map((row) => {
+  //       const columns = Array.from(row.querySelectorAll('td'));
+  //       const rowData = {};
 
-        columns.forEach((column, index) => {
-          const columnName = document.querySelectorAll('thead th')[index].textContent.trim();
-          const cellValue = column.textContent.trim();
-          rowData[customKeys[index]] = cellValue;
-        });
+  //       columns.forEach((column, index) => {
+  //         const columnName = document.querySelectorAll('thead th')[index].textContent.trim();
+  //         const cellValue = column.textContent.trim();
+  //         rowData[customKeys[index]] = cellValue;
+  //       });
 
-        return rowData;
-      });
-    });
-    const { sumofCallChangeOI, sumofPutChangeOI } = jsonData.reduce(
-      (acc, val) => {
-        const callValChangeOI = Number(val.callChangeOI?.replace(/,/g, '')) || 0;
-        const putValChangeOI = Number(val.putChangeOI?.replace(/,/g, '')) || 0;
+  //       return rowData;
+  //     });
+  //   });
+  //   const { sumofCallChangeOI, sumofPutChangeOI } = jsonData.reduce(
+  //     (acc, val) => {
+  //       const callValChangeOI = Number(val.callChangeOI?.replace(/,/g, '')) || 0;
+  //       const putValChangeOI = Number(val.putChangeOI?.replace(/,/g, '')) || 0;
 
-        if (callValChangeOI > 0) {
-          acc.sumofCallChangeOI += callValChangeOI;
-        } else {
-          acc.sumofPutChangeOI += -callValChangeOI;
-        }
+  //       if (callValChangeOI > 0) {
+  //         acc.sumofCallChangeOI += callValChangeOI;
+  //       } else {
+  //         acc.sumofPutChangeOI += -callValChangeOI;
+  //       }
 
-        if (putValChangeOI > 0) {
-          acc.sumofPutChangeOI += putValChangeOI;
-        } else {
-          acc.sumofCallChangeOI += -putValChangeOI;
-        }
-        return acc;
-      },
-      { sumofCallChangeOI: 0, sumofPutChangeOI: 0 } );
-      const changeInPCR = Number(sumofPutChangeOI / sumofCallChangeOI).toFixed(2);
-      console.log("pcr",changeInPCR)
+  //       if (putValChangeOI > 0) {
+  //         acc.sumofPutChangeOI += putValChangeOI;
+  //       } else {
+  //         acc.sumofCallChangeOI += -putValChangeOI;
+  //       }
+  //       return acc;
+  //     },
+  //     { sumofCallChangeOI: 0, sumofPutChangeOI: 0 } );
+  //     const changeInPCR = Number(sumofPutChangeOI / sumofCallChangeOI).toFixed(2);
+  //     console.log("pcr",changeInPCR)
 
-      const  PCR = Number(sumofPutChangeOI / sumofCallChangeOI).toFixed(2);
-      if (sumofCallChangeOI && PCR) {
-        database.ref(`/niftyChangeOI/sumofCallChangeOI`).set(sumofCallChangeOI);
-        database.ref(`/niftyChangeOI/sumofPutChangeOI`).set(sumofPutChangeOI);
-        database.ref(`/niftyChangeOI/changeInPCR`).set(PCR);
-      }
-    await browser.close();
-  }
+  //     const  PCR = Number(sumofPutChangeOI / sumofCallChangeOI).toFixed(2);
+  //     if (sumofCallChangeOI && PCR) {
+  //       database.ref(`/niftyChangeOI/sumofCallChangeOI`).set(sumofCallChangeOI);
+  //       database.ref(`/niftyChangeOI/sumofPutChangeOI`).set(sumofPutChangeOI);
+  //       database.ref(`/niftyChangeOI/changeInPCR`).set(PCR);
+  //     }
+  //   await browser.close();
+  // }
  
   
   async function fetchMoneyControlData() {
@@ -426,7 +469,7 @@ database.ref(`/`).on('value', async (snapshot) => {
   
   // Schedule tasks
   cron.schedule('* 9-16 * * 1-5', async () => {
-    await valuebrowser();
+    await fetchOptionChainData();
     setInterval(fetchMoneyControlData, 6000);
     setInterval(fetchOptionChainData, 10000);
   });
