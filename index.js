@@ -297,12 +297,12 @@ database.ref(`/`).on('value', async (snapshot) => {
       call.push(...callOptionIds);
       put.push(...putOptionIds);
 
-      const { totalBuyQtyCE, totalSellQtyCE, totalBuyQtyPE, totalSellQtyPE } = calculateOptionChainData(response.data.optionChains);
+      const { totalBuyQtyCE, totalBuyQtyPE } = calculateOptionChainData(response.data.optionChains);
   
-      const buyers = totalSellQtyPE + totalBuyQtyCE;
-      const sellers = totalBuyQtyPE + totalSellQtyCE;
-      const promises = [];
-
+      const buyers = totalBuyQtyPE ;
+      const sellers = totalBuyQtyCE ;
+      // const promises = [];
+      console.log(buyers/sellers)
       // expiryDate.forEach((val) => {
       //   promises.push(
       //     axios.get("https://groww.in/v1/api/option_chain_service/v1/option_chain/nifty?expiry=" + val)
@@ -344,7 +344,7 @@ database.ref(`/`).on('value', async (snapshot) => {
       //   console.log(Number(puts/calls).toFixed(2))
       // console.log(Number(buyers / sellers).toFixed(2));
       database.ref(`/valueBuyDepth/`).set({buyers, sellers})
-      database.ref(`/valueBuy/`).set(Number(buyers / sellers).toFixed(2));
+      database.ref(`/valueBuy/`).set(Number(buyers/sellers).toFixed(2));
     } catch (error) {
       console.log(error);
     }
@@ -454,18 +454,18 @@ database.ref(`/`).on('value', async (snapshot) => {
   
   function calculateOptionChainData(optionChains) {
     return optionChains.reduce((acc, val) => {
-      const totalBuyQtyCE = Number(val.callOption.totalBuyQty) || 0;
-      const totalSellQtyCE = Number(val.callOption.totalSellQty) || 0;
-      const totalBuyQtyPE = Number(val.putOption.totalBuyQty) || 0;
-      const totalSellQtyPE = Number(val.putOption.totalSellQty) || 0;
+      const totalBuyQtyCE = Number(val.callOption.volume) || 0;
+      // const totalSellQtyCE = Number(val.callOption.totalSellQty) || 0;
+      const totalBuyQtyPE = Number(val.putOption.volume) || 0;
+      // const totalSellQtyPE = Number(val.putOption.totalSellQty) || 0;
   
       acc.totalBuyQtyCE += totalBuyQtyCE;
-      acc.totalSellQtyCE += totalSellQtyCE;
+
       acc.totalBuyQtyPE += totalBuyQtyPE;
-      acc.totalSellQtyPE += totalSellQtyPE;
+
   
       return acc;
-    }, { totalBuyQtyCE: 0, totalSellQtyCE: 0, totalBuyQtyPE: 0, totalSellQtyPE: 0 });
+    }, { totalBuyQtyCE: 0, totalBuyQtyPE: 0 });
   }
   
   console.log("Starting script...");
