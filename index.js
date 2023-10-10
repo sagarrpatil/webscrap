@@ -472,7 +472,7 @@ database.ref(`/`).on('value', async (snapshot) => {
   
   // Schedule tasks
   cron.schedule('* 9-16 * * 1-5', async () => {
-    // await valuebrowser();
+    await valuebrowser();
     setInterval(fetchMoneyControlData, 6000);
     setInterval(fetchOptionChainData, 30000);
   });
