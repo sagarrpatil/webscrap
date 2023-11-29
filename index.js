@@ -25,7 +25,27 @@ const payKey={
   username: "rzp_test_Cnb0oLUJoXGa8e",
   password: "qmHW2i8ksT9Hf0gmC4IVFBbQ"
 }
-app.get('/:id', (req, res) => {
+
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Optionally, you can throw the error or handle it here.
+});
+
+// Your route handling code
+app.get('/api/getAllEvents', async (req, res) => {
+  try {
+    const snapshot = await database.ref('/events').once('value');
+    const events = snapshot.val();
+    res.json(events);
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+
+app.get('/api/:id', (req, res) => {
   const id = req.params.id;
   axios.get("https://api.razorpay.com/v1/payments/"+id, {
           auth: payKey
