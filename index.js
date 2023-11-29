@@ -50,6 +50,17 @@ app.get('/api/getAllEvents', async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+app.get('/api/geteventbyID/:id', async (req, res) => {
+  let id = req.params.id
+  try {
+    const snapshot = await database.ref('/events/'+id).once('value');
+    const events = snapshot.val();
+    res.json(events);
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 
 app.get('/api/:id', (req, res) => {
