@@ -9,7 +9,7 @@ const cheerio = require('cheerio');
 const cron = require('node-cron');
 app.use(cors());
 const corsOptions = {
-  origin: '*',
+  origin: 'https://in.merashow.com/',
 };
 
 app.use(cors(corsOptions));
