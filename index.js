@@ -62,11 +62,12 @@ app.get('/api/geteventbyID/:id', async (req, res) => {
   }
 });
 app.get('/api/successTransactionbyemail/email/:email', async (req, res) => {
-  let id = req.params.email
+  let email = req.params.email
   try {
-    const snapshot = await database.ref("SuccessTransactionQRcode").orderByChild("email").equalTo(this.state.email);
-    const events = snapshot.val();
-    res.json(events);
+    const snapshot = await database.ref("SuccessTransactionQRcode").orderByChild("email").equalTo(email).once('value');
+    const SuccessTransactionQRcode = snapshot.val();
+    console.log(SuccessTransactionQRcode)
+    res.json(SuccessTransactionQRcode);
   } catch (error) {
     console.error("Error fetching events:", error);
     res.status(500).json({ error: "Internal Server Error" });
