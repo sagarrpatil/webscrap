@@ -85,6 +85,7 @@ app.get('/api/successTransactionbyPaymentID/:id', async (req, res) => {
   }
 });
 
+//post
 app.post('/api/paymentcall', async (req, res) => {
   const requestData = req.body;
   try {
@@ -96,6 +97,7 @@ app.post('/api/paymentcall', async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
 
 function setPayment(id){
   axios.get("https://api.razorpay.com/v1/payments/"+id, {
