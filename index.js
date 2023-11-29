@@ -6,6 +6,13 @@ const FormData = require('form-data');
 const app = express();
 const cheerio = require('cheerio');
 const cron = require('node-cron');
+app.use(cors());
+const corsOptions = {
+  origin: '*',
+};
+
+app.use(cors(corsOptions));
+
 
 const PORT = 9000;
 const moment = require('moment');
