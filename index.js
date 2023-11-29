@@ -8,11 +8,6 @@ const app = express();
 const cheerio = require('cheerio');
 const cron = require('node-cron');
 app.use(cors());
-const corsOptions = {
-  origin: 'https://in.merashow.com/',
-};
-
-app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 const PORT = 9000;
