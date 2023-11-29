@@ -85,7 +85,6 @@ app.get('/api/successTransactionbyPaymentID/:id', async (req, res) => {
   }
 });
 
-//post
 app.post('/api/paymentcall', async (req, res) => {
   const requestData = req.body;
   try {
