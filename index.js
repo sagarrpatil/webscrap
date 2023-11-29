@@ -3,6 +3,7 @@ const axios = require("axios");
 var firebase = require('firebase')
 const cors = require('cors');
 const FormData = require('form-data');
+const bodyParser = require('body-parser');
 const app = express();
 const cheerio = require('cheerio');
 const cron = require('node-cron');
@@ -12,7 +13,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-
+app.use(bodyParser.json());
 
 const PORT = 9000;
 const moment = require('moment');
@@ -84,15 +85,27 @@ app.get('/api/successTransactionbyPaymentID/:id', async (req, res) => {
   }
 });
 
-app.get('/api/:id', (req, res) => {
-  const id = req.params.id;
+app.post('/api/paymentcall', async (req, res) => {
+  const requestData = req.body;
+  try {
+    const snapshot = await database.ref("/SuccessTransactionQRcode/"+requestData.razorpay_payment_id).set(requestData);
+    res.json(snapshot);
+    setPayment(requestData.razorpay_payment_id);
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+function setPayment(id){
   axios.get("https://api.razorpay.com/v1/payments/"+id, {
           auth: payKey
         }).then(async (response)=>{
          await database.ref(`/transaction/`+id).set({...response.data});
           console.log(response.data);
         });
-});
+}
+
 
 // setInterval(() => {
 process.env.TZ = 'Asia/Kolkata';
