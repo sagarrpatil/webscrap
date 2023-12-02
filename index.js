@@ -38,14 +38,24 @@ process.on('unhandledRejection', (reason, promise) => {
 // Your route handling code
 app.get('/api/getAllEvents', async (req, res) => {
   try {
-    const snapshot = await database.ref('/events').once('value');
-    const events = snapshot.val();
-    res.json(events);
+    const snapshot = await database.ref('/events').orderByChild('rank').once('value');
+    const eventsArray = Object.entries(snapshot.val() || {}).map(([key, value]) => ({ key, ...value }));
+    const sortedEvents = eventsArray
+      .filter(event => event.active === true)
+      .sort((a, b) => a.rank - b.rank);
+    const resultEvents = sortedEvents.reduce((acc, event) => {
+      acc[event.key] = event;
+      return acc;
+    }, {});
+
+    console.log(resultEvents); // Log the sorted and filtered events for debugging
+    res.json(resultEvents);
   } catch (error) {
     console.error("Error fetching events:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
 app.get('/api/geteventbyID/:id', async (req, res) => {
   let id = req.params.id
   try {
