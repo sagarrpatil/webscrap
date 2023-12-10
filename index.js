@@ -8,11 +8,6 @@ const app = express();
 const cheerio = require('cheerio');
 const cron = require('node-cron');
 app.use(cors());
-const corsOptions = {
-  origin: '*',
-};
-
-app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 const PORT = 9000;
@@ -43,14 +38,24 @@ process.on('unhandledRejection', (reason, promise) => {
 // Your route handling code
 app.get('/api/getAllEvents', async (req, res) => {
   try {
-    const snapshot = await database.ref('/events').once('value');
-    const events = snapshot.val();
-    res.json(events);
+    const snapshot = await database.ref('/events').orderByChild('rank').once('value');
+    const eventsArray = Object.entries(snapshot.val() || {}).map(([key, value]) => ({ key, ...value }));
+    const sortedEvents = eventsArray
+      .filter(event => event.active === true)
+      .sort((a, b) => a.rank - b.rank);
+    const resultEvents = sortedEvents.reduce((acc, event) => {
+      acc[event.key] = event;
+      return acc;
+    }, {});
+
+    console.log(resultEvents); // Log the sorted and filtered events for debugging
+    res.json(resultEvents);
   } catch (error) {
     console.error("Error fetching events:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
 app.get('/api/geteventbyID/:id', async (req, res) => {
   let id = req.params.id
   try {
@@ -85,7 +90,6 @@ app.get('/api/successTransactionbyPaymentID/:id', async (req, res) => {
   }
 });
 
-//post
 app.post('/api/paymentcall', async (req, res) => {
   const requestData = req.body;
   try {
@@ -98,6 +102,27 @@ app.post('/api/paymentcall', async (req, res) => {
   }
 });
 
+app.get('/api/getTransactionEventOwnerbyMailD/email/:email', async (req, res) => {
+  try {
+    const email = req.params.email;
+    const snapshot = await database.ref("transaction").orderByChild("notes/eventOwner").equalTo(email).once('value');
+
+    if (!snapshot.exists()) {
+      return res.json([]); // Return an empty array if no data found
+    }
+
+    const extractedData = Object.values(snapshot.val()).map(item => ({
+      id: item.id,
+      amount: item.amount,
+      transaction: item.notes.transaction
+    }));
+
+    res.json(extractedData);
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 function setPayment(id){
   axios.get("https://api.razorpay.com/v1/payments/"+id, {
