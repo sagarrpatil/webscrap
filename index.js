@@ -134,6 +134,40 @@ function setPayment(id){
 }
 
 
+
+
+//Instamojo
+app.get('/api/setuppayment', async (req, res) => {
+  // const requestData = req.body;
+  const encodedParams = new URLSearchParams();
+  encodedParams.set('grant_type', 'client_credentials');
+  encodedParams.set('client_id', 'test_lB5zTjGMe1MXMeSlwHPNpUDynWAMJsNDyqM');
+  encodedParams.set('client_secret', 'test_te70loEvtwNNHduAd1mheIa83xjTxwmBeP9Ay8speJATBPgJWlWeYGZNL0uERtsZwO0IR1ypIs8UqIfE9HjUdrEuxy00IZL2FuizM4LuLosv2ru2AUydV90XaNe');
+
+  
+  const options = {
+    method: 'POST',
+    url: 'https://test.instamojo.com/oauth2/token/',
+    headers: {
+      accept: 'application/json',
+      'content-type': 'application/x-www-form-urlencoded'
+    },
+    data: encodedParams,
+  };
+  
+  axios
+    .request(options)
+    .then(function (response) {
+      console.log(response.data);
+      res.json(response.data);
+    })
+    .catch(function (error) {
+      console.error(error);
+    });
+
+})
+
+
 // setInterval(() => {
 process.env.TZ = 'Asia/Kolkata';
 
