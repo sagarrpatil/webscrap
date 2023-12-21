@@ -25,8 +25,8 @@ var firebaseConfig = {
 firebase.initializeApp(firebaseConfig)
 let database = firebase.database();
 const payKey={
-  username: "rzp_test_Cnb0oLUJoXGa8e",
-  password: "qmHW2i8ksT9Hf0gmC4IVFBbQ"
+  username: "rzp_live_D6pzNiHMFu1om5",
+  password: "8bErktcbBt6B9BIfnid9nTLc"
 }
 
 
