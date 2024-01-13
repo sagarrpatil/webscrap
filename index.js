@@ -108,7 +108,7 @@ app.post('/api/postevents', async (req, res) => {
     // const requestData = Buffer.from(req.body.data, 'base64').toString('utf-8');;
     // const eventData = JSON.parse(requestData);
     // const eventName = createEventName(eventData.title, eventData.owner.contact);
-    await database.ref(`/events/${eventName}`).set(req.body.data);
+    await database.ref(`/events/tets`).set(req.body.data);
     res.json({ success: true });
   } catch (error) {
     console.error("Error posting events:", error);
