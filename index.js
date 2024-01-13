@@ -101,9 +101,12 @@ app.post('/api/paymentcall', async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+const atobPolyfill = (str) => {
+  return Buffer.from(str, 'base64').toString('binary');
+};
 app.post('/api/postevents', async (req, res) => {
   try {
-    const requestData = atob(req.body.data);
+    const requestData = typeof atob !== 'undefined' ? atob(req.body.data) : atobPolyfill(req.body.data);
     const eventData = JSON.parse(requestData);
     const eventName = createEventName(eventData.title, eventData.owner.contact);
     await database.ref(`/events/${eventName}`).set(eventData);
