@@ -112,7 +112,7 @@ app.post('/api/postevents', async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     console.error("Error posting events:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: "Internal Server Error:"+error });
   }
 });
 function createEventName(title, contact) {
