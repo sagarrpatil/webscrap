@@ -105,14 +105,18 @@ app.post('/api/paymentcall', async (req, res) => {
 
 app.post('/api/postevents', async (req, res) => {
   try {
-    const requestData = Buffer.from(req.body.data, 'base64').toString('utf-8');;
-    const eventData = JSON.parse(requestData);
+    const requestData = req.body.data;
+    if (!requestData) {
+      return res.status(400).json({ error: 'Invalid request data' });
+    }
+    const decodedData = Buffer.from(requestData, 'base64').toString('utf-8');
+    const eventData = JSON.parse(decodedData);
     const eventName = createEventName(eventData.title, eventData.owner.contact);
     await database.ref(`/events/${eventName}`).set(eventData);
     res.json({ success: true });
   } catch (error) {
     console.error("Error posting events:", error);
-    res.status(500).json({ error: "Internal Server Error:"+error+"test" });
+    res.status(500).json({ error: "Internal Server Error: " + error.message });
   }
 });
 function createEventName(title, contact) {
