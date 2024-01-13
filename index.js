@@ -6,6 +6,7 @@ const FormData = require('form-data');
 const bodyParser = require('body-parser');
 const app = express();
 const cheerio = require('cheerio');
+const Buffer = require('buffer').Buffer;
 const cron = require('node-cron');
 app.use(cors());
 app.use(bodyParser.json());
@@ -25,8 +26,8 @@ var firebaseConfig = {
 firebase.initializeApp(firebaseConfig)
 let database = firebase.database();
 const payKey={
-  username: "rzp_test_Cnb0oLUJoXGa8e",
-  password: "qmHW2i8ksT9Hf0gmC4IVFBbQ"
+  username: "rzp_live_D6pzNiHMFu1om5",
+  password: "8bErktcbBt6B9BIfnid9nTLc"
 }
 
 
@@ -101,18 +102,24 @@ app.post('/api/paymentcall', async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
 app.post('/api/postevents', async (req, res) => {
-  const requestData = req.body;
   try {
-    let data = JSON.parse(atob(requestData.data));
-    let name =   data.title.replaceAll(" ", "-") + btoa(data.owner.contact)
-    const snapshot = await database.ref('/events/'+name).set(data);
-    res.json(snapshot);
+    const requestData = Buffer.from(req.body.data, 'base64').toString('utf-8');;
+    const eventData = JSON.parse(requestData);
+    const eventName = createEventName(eventData.title, eventData.owner.contact);
+    await database.ref(`/events/${eventName}`).set(eventData);
+    res.json({ success: true });
   } catch (error) {
-    console.error("Error fetching events:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("Error posting events:", error);
+    res.status(500).json({ error: "Internal Server Error:"+error+"test" });
   }
 });
+function createEventName(title, contact) {
+  const sanitizedTitle = title.replaceAll(" ", "-");
+  const encodedContact = Buffer.from(contact).toString('base64');
+  return sanitizedTitle + encodedContact;
+}
 
 app.get('/api/getTransactionEventOwnerbyMailD/email/:email', async (req, res) => {
   try {
@@ -149,17 +156,21 @@ function setPayment(id){
 
 
 //Instamojo
-app.get('/api/setuppayment', async (req, res) => {
-  // const requestData = req.body;
+const baseURL = "https://test.instamojo.com/";
+const apibaseURL = "https://test.instamojo.com/";
+const client_id = 'test_lB5zTjGMe1MXMeSlwHPNpUDynWAMJsNDyqM';
+const client_secret = 'test_te70loEvtwNNHduAd1mheIa83xjTxwmBeP9Ay8speJATBPgJWlWeYGZNL0uERtsZwO0IR1ypIs8UqIfE9HjUdrEuxy00IZL2FuizM4LuLosv2ru2AUydV90XaNe'
+
+app.post('/api/setuppayment', async (req, res) => {
+  const requestData = req.body;
   const encodedParams = new URLSearchParams();
   encodedParams.set('grant_type', 'client_credentials');
-  encodedParams.set('client_id', 'test_lB5zTjGMe1MXMeSlwHPNpUDynWAMJsNDyqM');
-  encodedParams.set('client_secret', 'test_te70loEvtwNNHduAd1mheIa83xjTxwmBeP9Ay8speJATBPgJWlWeYGZNL0uERtsZwO0IR1ypIs8UqIfE9HjUdrEuxy00IZL2FuizM4LuLosv2ru2AUydV90XaNe');
-
-  
+  encodedParams.set('client_id', client_id);
+  encodedParams.set('client_secret', client_secret);
+  try {
   const options = {
     method: 'POST',
-    url: 'https://test.instamojo.com/oauth2/token/',
+    url: apibaseURL+'oauth2/token/',
     headers: {
       accept: 'application/json',
       'content-type': 'application/x-www-form-urlencoded'
@@ -170,13 +181,88 @@ app.get('/api/setuppayment', async (req, res) => {
   axios
     .request(options)
     .then(function (response) {
-      console.log(response.data);
-      res.json(response.data);
-    })
-    .catch(function (error) {
+      const encodedP = new URLSearchParams();
+      encodedP.set('allow_repeated_payments', 'false');
+      encodedP.set('send_email', 'false');
+      encodedP.set('amount', requestData.amount);
+      encodedP.set('purpose', requestData.address);
+      encodedP.set('notes', requestData.transaction);
+      encodedP.set('buyer_name', requestData.name);
+      encodedP.set('email', requestData.email);
+      encodedP.set('phone', '7057455569');
+      encodedP.set('redirect_url', `https://in.merashow.com/show/`+ encodeURI(requestData.email))
+      const option = {
+        method: 'POST',
+        url: baseURL+'v2/payment_requests/',
+        headers: {
+          accept: 'application/json',
+          Authorization: `Bearer ${response.data.access_token}`,
+          'content-type': 'application/x-www-form-urlencoded'
+        },
+        data: encodedP,
+      };
+      axios
+        .request(option)
+        .then(function (resp) {
+          res.json(resp.data);
+        })
+        .catch(function (error) {
+          console.error(error);
+        });
+          })
+          .catch(function (error) {
+            console.error(error);
+          });
+        }catch (error) {
+          console.error("Error fetching events:", error);
+          res.status(500).json({ error: "Internal Server Error" });
+        }
+})
+
+app.post('/api/getPaymentStatus', async (req, responsed) => {
+  const requestData = req.body;
+  const encodedParams = new URLSearchParams();
+  encodedParams.set('grant_type', 'client_credentials');
+  encodedParams.set('client_id', client_id);
+  encodedParams.set('client_secret', client_secret);
+  try {
+  const options = {
+    method: 'POST',
+    url: apibaseURL+'oauth2/token/',
+    headers: {
+      accept: 'application/json',
+      'content-type': 'application/x-www-form-urlencoded'
+    },
+    data: encodedParams,
+  };
+  
+  axios
+    .request(options)
+    .then((response) => {
+        // console.log(response.data.access_token)
+
+        const option = {
+          method: 'GET',
+          url: apibaseURL+'v2/payments/'+requestData.payment_id,
+          headers: {accept: 'application/json', Authorization: `Bearer ${response.data.access_token}`}
+        };
+        
+        axios
+          .request(option)
+          .then(function (res) {
+            // console.log(res.data);
+            responsed.json(res.data)
+          })
+          .catch(function (error) {
+            console.error(error);
+          });
+    }).catch(function (error) {
       console.error(error);
     });
-
+  }catch (error) {
+    console.error("Error fetching events:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 })
 
 
