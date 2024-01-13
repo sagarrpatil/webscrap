@@ -102,17 +102,22 @@ app.post('/api/paymentcall', async (req, res) => {
   }
 });
 app.post('/api/postevents', async (req, res) => {
-  const requestData = atob(req.body.data);
   try {
-    let data = JSON.parse(requestData);
-    let name = data.title.replaceAll(" ", "-") + btoa(data.owner.contact);
-    await database.ref('/events/'+name).set(data);
+    const requestData = atob(req.body.data);
+    const eventData = JSON.parse(requestData);
+    const eventName = createEventName(eventData.title, eventData.owner.contact);
+    await database.ref(`/events/${eventName}`).set(eventData);
     res.json({ success: true });
   } catch (error) {
-    console.error("Error fetching events:", error);
+    console.error("Error posting events:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+function createEventName(title, contact) {
+  const sanitizedTitle = title.replaceAll(" ", "-");
+  const encodedContact = btoa(contact);
+  return sanitizedTitle + encodedContact;
+}
 
 app.get('/api/getTransactionEventOwnerbyMailD/email/:email', async (req, res) => {
   try {
