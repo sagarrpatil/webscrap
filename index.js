@@ -106,8 +106,8 @@ app.post('/api/postevents', async (req, res) => {
   try {
     let data = JSON.parse(atob(requestData.data));
     let name =   data.title.replaceAll(" ", "-") + btoa(data.owner.contact)
-    const snapshot = await database.ref('/events/'+name).set(data);
-    res.json(snapshot);
+    await database.ref('/events/'+name).set(data);
+    res.json({ success: true });
   } catch (error) {
     console.error("Error fetching events:", error);
     res.status(500).json({ error: "Internal Server Error" });
