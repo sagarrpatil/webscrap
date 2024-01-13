@@ -102,10 +102,10 @@ app.post('/api/paymentcall', async (req, res) => {
   }
 });
 app.post('/api/postevents', async (req, res) => {
-  const requestData = req.body;
+  const requestData = atob(req.body.data);
   try {
-    let data = JSON.parse(atob(requestData.data));
-    let name =   data.title.replaceAll(" ", "-") + btoa(data.owner.contact)
+    let data = JSON.parse(requestData);
+    let name = data.title.replaceAll(" ", "-") + btoa(data.owner.contact);
     await database.ref('/events/'+name).set(data);
     res.json({ success: true });
   } catch (error) {
