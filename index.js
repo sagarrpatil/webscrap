@@ -6,6 +6,7 @@ const FormData = require('form-data');
 const bodyParser = require('body-parser');
 const app = express();
 const cheerio = require('cheerio');
+const Buffer = require('buffer').Buffer;
 const cron = require('node-cron');
 app.use(cors());
 app.use(bodyParser.json());
@@ -101,12 +102,10 @@ app.post('/api/paymentcall', async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-const atobPolyfill = (str) => {
-  return Buffer.from(str, 'base64').toString('binary');
-};
+
 app.post('/api/postevents', async (req, res) => {
   try {
-    const requestData = typeof atob !== 'undefined' ? atob(req.body.data) : atobPolyfill(req.body.data);
+    const requestData = Buffer.from(req.body.data, 'base64').toString('utf-8');;
     const eventData = JSON.parse(requestData);
     const eventName = createEventName(eventData.title, eventData.owner.contact);
     await database.ref(`/events/${eventName}`).set(eventData);
@@ -118,7 +117,7 @@ app.post('/api/postevents', async (req, res) => {
 });
 function createEventName(title, contact) {
   const sanitizedTitle = title.replaceAll(" ", "-");
-  const encodedContact = btoa(contact);
+  const encodedContact = Buffer.from(contact).toString('base64');
   return sanitizedTitle + encodedContact;
 }
 
