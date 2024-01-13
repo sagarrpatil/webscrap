@@ -101,6 +101,18 @@ app.post('/api/paymentcall', async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+app.post('/api/postevents', async (req, res) => {
+  const requestData = req.body;
+  try {
+    let data = JSON.parse(atob(requestData.data));
+    let name =   data.title.replaceAll(" ", "-") + btoa(data.owner.contact)
+    const snapshot = await database.ref('/events/'+name).set(data);
+    res.json(snapshot);
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 app.get('/api/getTransactionEventOwnerbyMailD/email/:email', async (req, res) => {
   try {
