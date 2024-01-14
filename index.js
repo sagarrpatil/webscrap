@@ -120,8 +120,8 @@ app.post('/api/postevents', async (req, res) => {
   }
 });
 function createEventName(title, contact) {
-  const sanitizedTitle = title.replace(/ /g, "-").replace(".","");
-  const encodedContact = contact.replace("+91","");
+  const sanitizedTitle = title.replace(/ /g, "-").replace(/[^\w\s]/gi, '');
+  const encodedContact = Number(contact.replace("+91",""))*2;
   return sanitizedTitle + encodedContact;
 }
 
