@@ -82,7 +82,7 @@ app.get('/api/successTransactionbyemail/email/:email', async (req, res) => {
 app.get('/api/geteventbyClient/:id', async (req, res) => {
   let id = req.params.id
   try {
-    const snapshot = await database.ref('/events/').orderByChild('Owner/contact').equalTo(id).once('value');
+    const snapshot = await database.ref('/events/').orderByChild('owner/contact').equalTo(id).once('value');
     const events = snapshot.val();
     res.json(events);
   } catch (error) {
