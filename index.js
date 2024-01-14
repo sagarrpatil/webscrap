@@ -79,6 +79,17 @@ app.get('/api/successTransactionbyemail/email/:email', async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+app.get('/api/geteventbyClient/:id', async (req, res) => {
+  let id = req.params.id
+  try {
+    const snapshot = await database.ref('/events/').orderByChild('Owner/contact').equalTo(id).once('value');
+    const events = snapshot.val();
+    res.json(events);
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 app.get('/api/successTransactionbyPaymentID/:id', async (req, res) => {
   let id = req.params.id
   try {
