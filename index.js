@@ -136,15 +136,13 @@ function createEventName(title, contact) {
   return sanitizedTitle +"-"+ encodedContact;
 }
 
-app.get('/api/getTransactionEventOwnerbyMailD/:email/:id', async (req, res) => {
+app.get('/api/getTransactionEventOwnerbyMailD/:token/:id', async (req, res) => {
   try {
     const id = req.params.id;
-    const email = req.params.email;
-    const headers = req.headers;
-    const token = (headers && headers.token) ? JSON.parse(atob(headers.token)) : null;
-    if(token.email === email){
+    const token = req.params.token ? JSON.parse(atob(req.params.token)) : null;
+    if(token.email){
     const snapshot = await database.ref("transaction")
-      .orderByChild("notes/eventOwner").equalTo(email)
+      .orderByChild("notes/eventOwner").equalTo(token.email)
       .once('value');
     if (!snapshot.exists()) {
       return res.json([]);
