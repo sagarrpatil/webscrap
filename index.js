@@ -139,7 +139,7 @@ function createEventName(title, contact) {
 app.get('/api/getTransactionEventOwnerbyMailD/:token/:id', async (req, res) => {
   try {
     const id = req.params.id;
-    const token = req.params.token ? JSON.parse(atob(req.params.token)) : null;
+    const token = token ? Buffer.from(req.params.token, 'base64').toString('utf-8') : null;
     if(token.email){
     const snapshot = await database.ref("transaction")
       .orderByChild("notes/eventOwner").equalTo(token.email)
