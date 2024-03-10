@@ -136,27 +136,40 @@ function createEventName(title, contact) {
   return sanitizedTitle +"-"+ encodedContact;
 }
 
-app.get('/api/getTransactionEventOwnerbyMailD/email/:email', async (req, res) => {
+app.get('/api/getTransactionEventOwnerbyMailD/:id', async (req, res) => {
   try {
-    const email = req.params.email;
-    const snapshot = await database.ref("transaction").orderByChild("notes/eventOwner").equalTo(email).once('value');
-
+    const id = req.params.id;
+    const headers = req.headers;
+    const token = (headers && headers.token) ? JSON.parse(atob(headers.token)) : null;
+    if(token){
+    const snapshot = await database.ref("transaction")
+      .orderByChild("notes/eventOwner").equalTo(token.email)
+      .once('value');
     if (!snapshot.exists()) {
-      return res.json([]); // Return an empty array if no data found
+      return res.json([]);
     }
-
-    const extractedData = Object.values(snapshot.val()).map(item => ({
-      id: item.id,
-      amount: item.amount,
-      transaction: item.notes.transaction
-    }));
-
+    const extractedData = Object.values(snapshot.val()).map(item => {
+      if (item.notes && item.notes.address === id) {
+        return {
+          id: item.id,
+          amount: item.amount,
+          transaction: item.notes.transaction
+        };
+      } else {
+        return null;
+      }
+    }).filter(item => item !== null);
     res.json(extractedData);
+    }
+    else {
+      res.json([]);
+    }
   } catch (error) {
     console.error("Error fetching events:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
 
 function setPayment(id){
   axios.get("https://api.razorpay.com/v1/payments/"+id, {
