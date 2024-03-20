@@ -36,6 +36,47 @@ process.on('unhandledRejection', (reason, promise) => {
   // Optionally, you can throw the error or handle it here.
 });
 
+
+//WhatsAPP Code
+app.get('/api/sendWAmessage/:message/:phone', async (req, res) => {
+  try {
+    const { message, phone } = req.params;
+
+    const fbTokenResponse = await axios.get("https://graph.facebook.com/v2.10/oauth/access_token", {
+      params: {
+        grant_type: "fb_exchange_token",
+        client_id: "296113739720920",
+        client_secret: "3ed23567bd175be409952a1db7642788",
+        fb_exchange_token: "EAAENUFpE6NgBO1qmPpAP2ZAmrrUrT7tgKS4j7smvZCYUFDxaRVhZAKeGBS7t2BDZBKqQq3zJKH6dpByPWFTmDVgGvM18KNFSZCnhYEiLyY0sUivdvWPYcXZBLizORPxsZANxW8Jp6kTKkOg3Y8fNZBY9uDrHgJexKq0t5L3D3x3F2uEydguh8KGLMEKOyJ53uDrKbtcDxmBFCzFjnvpKWt5Yikkim30ZD"
+      }
+    });
+
+    const config = {
+      headers: {
+        "Authorization": `Bearer ${fbTokenResponse.data.access_token}`,
+        "Content-Type": "application/json"
+      }
+    };
+
+    const data = {
+      messaging_product: "whatsapp",
+      to: `91${phone}`,
+      type: "template",
+      template: {
+        name: message,
+        language: { code: "en" }
+      }
+    };
+
+    const response = await axios.post("https://graph.facebook.com/v18.0/211432598730348/messages", data, config);
+    res.json(response.data);
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+//WhatsAPP code end
+
 // Your route handling code
 app.get('/api/getAllEvents', async (req, res) => {
   try {
