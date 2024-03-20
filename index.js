@@ -79,6 +79,17 @@ app.get('/api/successTransactionbyemail/email/:email', async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+app.get('/api/geteventbyClient/:id', async (req, res) => {
+  let id = req.params.id
+  try {
+    const snapshot = await database.ref('/events/').orderByChild('owner/contact').equalTo(id).once('value');
+    const events = snapshot.val();
+    res.json(events);
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 app.get('/api/successTransactionbyPaymentID/:id', async (req, res) => {
   let id = req.params.id
   try {
@@ -105,43 +116,60 @@ app.post('/api/paymentcall', async (req, res) => {
 
 app.post('/api/postevents', async (req, res) => {
   try {
-    const requestData = Buffer.from(req.body.data, 'base64').toString('utf-8');;
-    const eventData = JSON.parse(requestData);
+    const requestData = req.body.data;
+    if (!requestData) {
+      return res.status(400).json({ error: 'Invalid request data' });
+    }
+    const decodedData = Buffer.from(requestData, 'base64').toString('utf-8');
+    const eventData = JSON.parse(decodedData);
     const eventName = createEventName(eventData.title, eventData.owner.contact);
     await database.ref(`/events/${eventName}`).set(eventData);
     res.json({ success: true });
   } catch (error) {
     console.error("Error posting events:", error);
-    res.status(500).json({ error: "Internal Server Error:"+error+"test" });
+    res.status(500).json({ error: "Internal Server Error: " + error.message });
   }
 });
 function createEventName(title, contact) {
-  const sanitizedTitle = title.replaceAll(" ", "-");
-  const encodedContact = Buffer.from(contact).toString('base64');
-  return sanitizedTitle + encodedContact;
+  const sanitizedTitle = title.replace(/ /g, "-").replace(/[^\w\s]/gi, '');
+  const encodedContact = Number(contact.replace("+91",""))*2;
+  return sanitizedTitle +"-"+ encodedContact;
 }
 
-app.get('/api/getTransactionEventOwnerbyMailD/email/:email', async (req, res) => {
+app.get('/api/getTransactionEventOwnerbyMailD/:token/:id', async (req, res) => {
   try {
-    const email = req.params.email;
-    const snapshot = await database.ref("transaction").orderByChild("notes/eventOwner").equalTo(email).once('value');
-
+    const id = req.params.id;
+    const token = req.params.token ? JSON.parse(Buffer.from(req.params.token, 'base64').toString('utf-8')) : null;
+    console.log(token)
+    if(token.email){
+    const snapshot = await database.ref("transaction")
+      .orderByChild("notes/eventOwner").equalTo(token.email)
+      .once('value');
     if (!snapshot.exists()) {
-      return res.json([]); // Return an empty array if no data found
+      return res.json([]);
     }
-
-    const extractedData = Object.values(snapshot.val()).map(item => ({
-      id: item.id,
-      amount: item.amount,
-      transaction: item.notes.transaction
-    }));
-
+    const extractedData = Object.values(snapshot.val()).map(item => {
+      if (item.notes && item.notes.address === id) {
+        return {
+          id: item.id,
+          amount: item.amount,
+          transaction: item.notes.transaction
+        };
+      } else {
+        return null;
+      }
+    }).filter(item => item !== null);
     res.json(extractedData);
+    }
+    else {
+      res.json([]);
+    }
   } catch (error) {
     console.error("Error fetching events:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
 
 function setPayment(id){
   axios.get("https://api.razorpay.com/v1/payments/"+id, {
