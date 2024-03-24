@@ -242,12 +242,12 @@ function isPaymentSuccessful(eventsData) {
 function extractSuccessData(id, eventsData) {
   return {
     razorpay_payment_id: id,
-    qrcode: id.replace("pay_", ""),
+    qrcode: id,
     email: eventsData.email,
     showtitle: eventsData.notes.showtitle,
     showid: eventsData.notes.address,
     status: true,
-    transaction: eventsData.notes.transaction,
+    transaction: JSON.parse(eventsData.notes.transaction),
     eventDate: eventsData.notes.eventDate,
     starttime: "10:00 AM",
     venue: eventsData.notes.venue
@@ -256,7 +256,7 @@ function extractSuccessData(id, eventsData) {
 
 // Helper function to save successful transaction
 async function saveSuccessTransaction(data) {
-  await database.ref(`/SuccessTransactionQRcode/${data.razorpay_payment_id}`).set(data);
+  await database.ref(`/SuccessTransactionQRcode/${data.razorpay_payment_id}`).set({...data});
 }
 
 // Helper function to save transaction details
