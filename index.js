@@ -211,6 +211,58 @@ app.get('/api/getTransactionEventOwnerbyMailD/:token/:id', async (req, res) => {
   }
 });
 
+app.get('/api/retryPayment/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const response = await axios.get(`https://api.razorpay.com/v1/payments/${id}`, {
+      auth: payKey
+    });
+
+    const eventsData = response.data;
+    if (isPaymentSuccessful(eventsData)) {
+      const successData = extractSuccessData(id, eventsData);
+      await saveSuccessTransaction(successData);
+      await saveTransactionDetails(id, eventsData);
+      res.json(eventsData);
+    } else {
+      res.json({});
+    }
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Helper function to check if payment is successful
+function isPaymentSuccessful(eventsData) {
+  return eventsData.status === "authorized" || eventsData.status === "captured";
+}
+
+// Helper function to extract success data
+function extractSuccessData(id, eventsData) {
+  return {
+    razorpay_payment_id: id,
+    qrcode: id.replace("pay_", ""),
+    email: eventsData.email,
+    showtitle: eventsData.notes.showtitle,
+    showid: eventsData.notes.address,
+    status: true,
+    transaction: eventsData.notes.transaction,
+    eventDate: eventsData.notes.eventDate,
+    starttime: "10:00 AM",
+    venue: eventsData.notes.venue
+  };
+}
+
+// Helper function to save successful transaction
+async function saveSuccessTransaction(data) {
+  await database.ref(`/SuccessTransactionQRcode/${data.razorpay_payment_id}`).set(data);
+}
+
+// Helper function to save transaction details
+async function saveTransactionDetails(id, eventsData) {
+  await database.ref(`/transaction/${id}`).set({ ...eventsData });
+}
 
 function setPayment(id){
   axios.get("https://api.razorpay.com/v1/payments/"+id, {
