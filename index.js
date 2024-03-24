@@ -242,7 +242,7 @@ function isPaymentSuccessful(eventsData) {
 function extractSuccessData(id, eventsData) {
   return {
     razorpay_payment_id: id,
-    qrcode: id,
+    qrcode: id.replace("pay_", ""),
     email: eventsData.email,
     showtitle: eventsData.notes.showtitle,
     showid: eventsData.notes.address,
