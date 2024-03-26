@@ -190,7 +190,7 @@ app.get('/api/getTransactionEventOwnerbyMailD/:token/:id', async (req, res) => {
       return res.json([]);
     }
     const extractedData = Object.values(snapshot.val()).map(item => {
-      if (item.notes && item.notes.address === id) {
+      if (item.notes && item.notes.address === id && item.status !== "refund") {
         return {
           id: item.id,
           amount: item.amount,
