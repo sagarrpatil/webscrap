@@ -108,6 +108,22 @@ app.get('/api/banners', async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+app.get('/api/myshows', async (req, res) => {
+  if(req.headers['token']){
+  try {
+    let token = JSON.parse(atob(req.headers['token']));
+    let getAllPaymentdata = await getAllPayment(token.user.phoneNumber, 100, 1);
+    res.json(getAllPaymentdata);
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+  }else{
+    res.status(500).json({ error: "unauthorized" });
+  }
+});
+
 app.get('/api/geteventbyID/:id', async (req, res) => {
   let id = req.params.id
   try {
@@ -284,6 +300,13 @@ function setPayment(id){
 }
 
 
+function getAllPayment(phone, count, sr){
+  return axios.get(`https://api.razorpay.com/v1/payments?count=${count}&skip=${sr}&contact=${encodeURIComponent(phone)}`, {
+          auth: payKey
+        }).then(async (response)=>{
+            return response.data.items;
+        });
+}
 
 
 //Instamojo
