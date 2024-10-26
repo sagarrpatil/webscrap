@@ -312,7 +312,7 @@ function extractPaymentDataDetails(payments) {
 
   return payments.map((payment) => {
     let transactionData = null;
-    console.log(payment)
+    // console.log(payment)
     // Ensure notes and transaction are available before parsing
     if (payment.notes && payment.notes.transaction) {
       try {
