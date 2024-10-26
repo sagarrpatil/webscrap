@@ -301,7 +301,7 @@ function setPayment(id){
 
 
 function getAllPayment(phone, count, sr){
-  return axios.get(`https://api.razorpay.com/v1/payments?count=${100}&skip=${sr}&contact=${encodeURIComponent(phone)}`, {
+  return axios.get(`https://api.razorpay.com/v1/payments?count=${count}&skip=${sr}&contact=${encodeURIComponent(phone)}`, {
           auth: payKey
         }).then(async (response)=>{
             return extractPaymentDataDetails(response.data.items);
@@ -309,7 +309,18 @@ function getAllPayment(phone, count, sr){
 }
 
 function extractPaymentDataDetails(payments) {
+
   return payments.map((payment) => {
+    let transactionData = null;
+    console.log(payment)
+    // Ensure notes and transaction are available before parsing
+    if (payment.notes && payment.notes.transaction) {
+      try {
+        transactionData = JSON.parse(payment.notes.transaction);
+      } catch (error) {
+        console.log(`Error parsing transaction for payment ID ${payment.id}:`, error);
+      }
+    }
     return {
       razorpay_payment_id: payment.id,
       qrcode: payment.id.replace("pay_", ""),
@@ -317,9 +328,10 @@ function extractPaymentDataDetails(payments) {
       showtitle: payment.notes.showtitle,
       showid: payment.notes.address,
       status: payment.status,
-      transaction: payment.notes.transaction ? JSON.parse(payment.notes.transaction) : null,
+      transaction: transactionData,
       eventDate: payment.notes.eventDate,
-      venue: payment.notes.venue
+      venue: payment.notes.venue,
+      createdAt: payment.created_at
     };
   });
 }
