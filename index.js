@@ -25,11 +25,14 @@ var firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig)
 let database = firebase.database();
+// const payKey={
+//   username: "rzp_live_D6pzNiHMFu1om5",
+//   password: "8bErktcbBt6B9BIfnid9nTLc"
+// }
 const payKey={
-  username: "rzp_live_D6pzNiHMFu1om5",
-  password: "8bErktcbBt6B9BIfnid9nTLc"
+  username: "rzp_test_RGBsBmhGE2n1gh",
+  password: "qiYgz27SVjOlg5nbSBM8KLjy"
 }
-
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
