@@ -116,7 +116,7 @@ app.get('/api/myshows', async (req, res) => {
   if(req.headers['token']){
   try {
     let token = JSON.parse(atob(req.headers['token']));
-    let getAllPaymentdata = await getAllPayment(token.user.phoneNumber, 100, 1);
+    let getAllPaymentdata = await getAllPayment(token.user.phoneNumber, 100, 0);
     res.json(getAllPaymentdata);
   } catch (error) {
     console.error("Error fetching events:", error);
